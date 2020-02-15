@@ -1,0 +1,21 @@
+﻿@using Microsoft.AspNetCore.Http.Extensions
+@using System.Web
+@using winamptospotifyweb.Models
+@{
+    QueryBuilder qb = ViewData["qb"] as QueryBuilder;
+    var authorizationUrl = ViewData["AuthorizationUrl"];
+}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Authentication to Spotify API</title>
+</head>
+<body>
+    <div>
+        <h5>Authentication to Spotify API</h5>
+    </div>
+    <div class="col-md-6">
+        <a class="btn btn-primary" href="@Html.Raw(HttpUtility.HtmlDecode(authorizationUrl + @qb.ToQueryString().ToString()))">Authenticate at Spotify</a>
+    </div>
+</body>
+</html>

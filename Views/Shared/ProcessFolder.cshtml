@@ -1,0 +1,29 @@
+﻿@using winamptospotifyweb.Models
+@{
+    Layout = "_Layout";
+    PlaylistSummary playlistSummary = ViewData["plSummary"] as PlaylistSummary;
+}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Result of process mp3 folder</title>
+</head>
+<body>
+    <div class="col-md-6">
+        <b>@playlistSummary.AlbumName</b> album created successfully <br />
+        <div>
+            Tracks added<br />
+            @foreach (var trackName in playlistSummary.TracksAdded.Split(","))
+            {
+                @trackName
+
+                <br />
+            }
+        </div>
+        <a href="@Url.Action("SelectFolder", "Spotify")">Select New Folder</a>
+
+    </div>
+</body>
+</html>
+
+
