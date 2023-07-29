@@ -59,7 +59,7 @@ namespace winamptospotifyweb.Services
             if (string.IsNullOrWhiteSpace(folderPath)) throw new ArgumentException($"{nameof(folderPath)} is empty");
             if (string.IsNullOrWhiteSpace(accessToken)) throw new ArgumentException($"{nameof(accessToken)} is empty");
 
-            string artistAndOrAlbum = folderPath.Split('\\').Select(s => s).Last();
+            string artistAndOrAlbum = folderPath.Split('\\')[folderPath.Split('\\').Length -1];
             ProcessFolder processFolder = new ProcessFolder(accessToken, folderPath, artistAndOrAlbum);
             processFolder.PlaylistId = await CreatePlayList(processFolder);
             processFolder.TracksInfo = await GetTrackUriAndNames(processFolder);
