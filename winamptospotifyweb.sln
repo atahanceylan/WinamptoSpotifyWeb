@@ -1,9 +1,11 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 16
-VisualStudioVersion = 16.0.29519.181
+# Visual Studio Version 17
+VisualStudioVersion = 17.6.33723.286
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "winamptospotifyweb", "winamptospotifyweb.csproj", "{474AFA6E-D8D2-45ED-961B-24D14CFEC1AA}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WinampToSpotifyWeb", "WinamptoSpotifyWeb\WinampToSpotifyWeb.csproj", "{9D060567-C15D-4F54-AA57-107CBDA14F85}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WinampToSpotifyWeb.Tests", "WinampToSpotifyWeb.Tests\WinampToSpotifyWeb.Tests.csproj", "{FB64EB41-7441-4C2E-B0C3-13BC425DE923}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -11,10 +13,14 @@ Global
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{474AFA6E-D8D2-45ED-961B-24D14CFEC1AA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{474AFA6E-D8D2-45ED-961B-24D14CFEC1AA}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{474AFA6E-D8D2-45ED-961B-24D14CFEC1AA}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{474AFA6E-D8D2-45ED-961B-24D14CFEC1AA}.Release|Any CPU.Build.0 = Release|Any CPU
+		{9D060567-C15D-4F54-AA57-107CBDA14F85}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9D060567-C15D-4F54-AA57-107CBDA14F85}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9D060567-C15D-4F54-AA57-107CBDA14F85}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9D060567-C15D-4F54-AA57-107CBDA14F85}.Release|Any CPU.Build.0 = Release|Any CPU
+		{FB64EB41-7441-4C2E-B0C3-13BC425DE923}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FB64EB41-7441-4C2E-B0C3-13BC425DE923}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FB64EB41-7441-4C2E-B0C3-13BC425DE923}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{FB64EB41-7441-4C2E-B0C3-13BC425DE923}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
