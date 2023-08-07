@@ -3,7 +3,7 @@ Winamp to Spotify : Select your mp3 archieve folder and see the magic :)
 The aim of this side project is collecting mp3 filenames from harddisk and create Spotify Playlist based on selected folder. To use this you need a Spotify Developer Account. To use the Web API, start by creating a Spotify user account (Premium or Free). To do that, simply sign up at https://developer.spotify.com/dashboard After creating a spotify developer account you should register an application through Dashboard.
 ![Creating_Spotify_App](WinamptoSpotifyWeb/Resources/creating_app_spotify.gif) 
 
-After these 3 step your application should be created successfully.
+After doing these 3 step your application should be created successfully.
 ![Dashboard](WinamptoSpotifyWeb/Resources/after_creating_app_on_dashboard.png)
 
 After creating you will have ClientID and Client Secret values. After creating app from Edit Settings tab you should set Redirection URLs.
