@@ -50,7 +50,7 @@ steps:
   displayName: 'Install python dependencies'
 
 - script: |
-      python sunshine.py -i $(Build.ArtifactStagingDirectory)/bom.json -o $(Build.ArtifactStagingDirectory)
+      python sunshine.py -i $(Build.ArtifactStagingDirectory)/bom.json -o $(Build.ArtifactStagingDirectory)/sbom.html
   displayName: Generate SBOM html
 
 - task: PublishBuildArtifacts@1
