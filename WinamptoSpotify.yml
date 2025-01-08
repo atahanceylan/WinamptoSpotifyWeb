@@ -21,12 +21,6 @@ steps:
     command: restore
     projects: $(System.DefaultWorkingDirectory)/WinamptoSpotifyWeb
 
-- task: DotNetCoreCLI@2
-  displayName: Build
-  inputs:
-    projects: $(System.DefaultWorkingDirectory)/WinamptoSpotifyWeb
-    arguments: --configuration $(BuildConfiguration)
-
 - script: |
     dotnet build $(System.DefaultWorkingDirectory)/WinamptoSpotifyWeb/WinampToSpotifyWeb.csproj --output $(Build.ArtifactStagingDirectory)
   displayName: 'Build the project'
@@ -57,7 +51,8 @@ steps:
   inputs:
     command: test
     projects: $(System.DefaultWorkingDirectory)/WinamptoSpotifyWeb.Tests
-    arguments: --configuration $(BuildConfiguration)    
+    arguments: --configuration $(BuildConfiguration)  
+      
 - task: DotNetCoreCLI@2
   displayName: Publish
   inputs:
@@ -66,6 +61,7 @@ steps:
     projects: $(System.DefaultWorkingDirectory)/WinamptoSpotifyWeb
     arguments: --configuration $(BuildConfiguration) --output $(build.artifactstagingdirectory)
     zipAfterPublish: True
+
 - task: PublishBuildArtifacts@1
   displayName: Publish Artifact
   condition: succeededOrFailed()
