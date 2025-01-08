@@ -20,7 +20,7 @@ steps:
   inputs:
     command: restore
     projects: $(System.DefaultWorkingDirectory)/WinamptoSpotifyWeb
-    
+
 - task: DotNetCoreCLI@2
   displayName: Build
   inputs:
@@ -30,6 +30,12 @@ steps:
 - script: |
     dotnet build $(System.DefaultWorkingDirectory)/WinamptoSpotifyWeb/WinampToSpotifyWeb.csproj --output $(Build.ArtifactStagingDirectory)
   displayName: 'Build the project'
+
+- script: |
+    curl -Lo $(Agent.TempDirectory)/sbom-tool https://github.com/microsoft/sbom-tool/releases/latest/download/sbom-tool-linux-x64
+    chmod +x $(Agent.TempDirectory)/sbom-tool
+    $(Agent.TempDirectory)/sbom-tool generate -b $(Build.ArtifactStagingDirectory) -bc $(System.DefaultWorkingDirectory)/WinamptoSpotifyWeb/ -pn Test -pv 1.0.0 -ps MyCompany -nsb https://sbom.mycompany.com -V Verbose
+  displayName: Generate SBOM
 
 - task: PublishBuildArtifacts@1
   inputs:
