@@ -40,8 +40,18 @@ steps:
       dotnet CycloneDX $(System.DefaultWorkingDirectory)/WinamptoSpotifyWeb/WinampToSpotifyWeb.csproj --json --output $(Build.ArtifactStagingDirectory)
   displayName: Generate SBOM with CycloneDX
 
+- task: UsePythonVersion@0
+  displayName: 'Use Python 3.10'
+  inputs:
+    versionSpec: 3.10
+  
 - script: |
-      sunshine.py -i $(Build.ArtifactStagingDirectory) -o $(Build.ArtifactStagingDirectory)
+      python -m pip install --upgrade pip
+      pip install -r requirements.txt
+  displayName: 'Install python dependencies'
+
+- script: |
+      python sunshine.py -i $(Build.ArtifactStagingDirectory) -o $(Build.ArtifactStagingDirectory)
   displayName: Generate SBOM html
 
 - task: PublishBuildArtifacts@1
