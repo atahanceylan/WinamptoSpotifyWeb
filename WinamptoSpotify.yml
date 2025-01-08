@@ -40,6 +40,10 @@ steps:
       dotnet CycloneDX $(System.DefaultWorkingDirectory)/WinamptoSpotifyWeb/WinampToSpotifyWeb.csproj --json --output $(Build.ArtifactStagingDirectory)
   displayName: Generate SBOM with CycloneDX
 
+- script: |
+      sunshine.py -i $(Build.ArtifactStagingDirectory) -o $(Build.ArtifactStagingDirectory)
+  displayName: Generate SBOM html
+
 - task: PublishBuildArtifacts@1
   inputs:
     PathtoPublish: '$(Build.ArtifactStagingDirectory)'
