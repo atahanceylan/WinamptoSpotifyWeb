@@ -1,6 +1,7 @@
 name: $(date:yyyyMMdd)$(rev:.r)
 pool:
-  name: Azure Pipelines
+  vmImage: ubuntu-latest
+
 variables:
 - name: BuildConfiguration
   value: Release
@@ -9,11 +10,17 @@ variables:
 - name: system.debug
   value: false
 steps:
+- task: UseDotNet@2
+  inputs:
+    packageType: 'sdk'
+    version: '7.x'
+
 - task: DotNetCoreCLI@2
   displayName: Restore
   inputs:
     command: restore
     projects: $(System.DefaultWorkingDirectory)/WinamptoSpotifyWeb
+    
 - task: DotNetCoreCLI@2
   displayName: Build
   inputs:
@@ -21,7 +28,7 @@ steps:
     arguments: --configuration $(BuildConfiguration)
 
 - script: |
-    dotnet build $(System.DefaultWorkingDirectory)/WinamptoSpotifyWeb/WinamptoSpotifyWeb.csproj --output $(Build.ArtifactStagingDirectory)
+    dotnet build $(System.DefaultWorkingDirectory)/WinamptoSpotifyWeb/WinampToSpotifyWeb.csproj --output $(Build.ArtifactStagingDirectory)
   displayName: 'Build the project'
 
 - task: PublishBuildArtifacts@1
