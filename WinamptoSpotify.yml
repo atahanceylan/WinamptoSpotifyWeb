@@ -14,7 +14,7 @@ steps:
     script: |
       echo  '$(System.DefaultWorkingDirectory)'
       dir
-      dir subfoldername
+      dir $(System.DefaultWorkingDirectory)\WinamptoSpotifyWeb
 - task: DotNetCoreCLI@2
   displayName: Restore
   inputs:
