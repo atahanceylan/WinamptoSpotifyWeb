@@ -9,12 +9,6 @@ variables:
 - name: system.debug
   value: false
 steps:
-- task: CmdLine@2
-  inputs:
-    script: |
-      echo  '$(System.DefaultWorkingDirectory)'
-      dir
-      dir $(System.DefaultWorkingDirectory)/WinamptoSpotifyWeb
 - task: DotNetCoreCLI@2
   displayName: Restore
   inputs:
@@ -24,7 +18,18 @@ steps:
   displayName: Build
   inputs:
     projects: $(System.DefaultWorkingDirectory)/WinamptoSpotifyWeb
-    arguments: --configuration $(BuildConfiguration)    
+    arguments: --configuration $(BuildConfiguration)
+    
+- script: |
+    dotnet build $(Build.SourcesDirectory)/Demo.csproj --output $(Build.ArtifactStagingDirectory)
+  displayName: 'Build the project'
+
+- task: PublishBuildArtifacts@1
+  inputs:
+    PathtoPublish: '$(Build.ArtifactStagingDirectory)'
+    ArtifactName: 'drop'
+    publishLocation: 'Container'
+
 - task: DotNetCoreCLI@2
   displayName: Test
   inputs:
