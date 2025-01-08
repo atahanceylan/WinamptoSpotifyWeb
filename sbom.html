@@ -1,0 +1,1668 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sunshine - SBOM visualization tool</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.7/css/dataTables.bootstrap5.min.css">
+    <script src="https://code.jquery.com/jquery-3.7.1.js"></script>
+    <script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.7/js/dataTables.bootstrap5.min.js"></script>
+    <script src="https://cdn.datatables.net/buttons/2.4.2/js/dataTables.buttons.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.8/pdfmake.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.8/vfs_fonts.js"></script>
+    <script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.html5.min.js"></script>
+    <script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.print.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script src="https://fastly.jsdelivr.net/npm/echarts@5.5.1/dist/echarts.min.js"></script>
+    <style>
+        body {
+            margin: 20px;
+            height: 100vh;
+            background: linear-gradient(to right, #032c57, #1C538E);
+        }
+        #output {
+            white-space: pre-line;
+            background-color: #ffffff;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            margin-top: 10px;
+            font-family: "Courier New", "Lucida Console", monospace;
+        }
+
+        #chart-container {
+            background-color: #ffffff;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            position: relative;
+        }
+
+        #chart-container-inner {
+            background-color: #ffffff;
+            padding: 10px;
+            position: relative;
+            height: 90vh;
+            overflow: hidden;
+        }
+        #chart-container-placeholder {
+            background-color: #fffffF;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+
+        #table-container {
+            background-color: #fffffF;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        #table-container-placeholder {
+            background-color: #fffffF;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+
+        #upload-file-container {
+            background-color: #fffffF;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+
+        #file-input {
+            margin: 20px;
+        }
+
+        .dataTables_filter {
+            display: none;
+        }
+        th input {
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        .dataTables_length {
+            padding-bottom: 10px !important;
+        }
+        .light-text {
+            color: #baccde;
+        }
+
+        .dt-buttons {
+            float: right;
+        }
+        .active>.page-link, .page-link.active {
+            background-color: #1C538E !important;
+            color: white !important;
+        }
+
+        .page-link {
+            color: #1C538E;
+        }
+
+        #components-table_paginate {
+            float: right;
+            margin-top: -33px;
+        }
+
+        .bg-dark-red {
+            background-color: #a10a0a;
+            color: white;
+        }
+
+        .bg-orange {
+            background-color: #ff9335;
+            color: white;
+        }
+
+        .bg-yellow {
+            background-color: #fccd58;
+            color: white;
+        }
+
+        .bg-light-blue {
+            background-color: #9fc5e8;
+            color: black;
+        }
+
+        #footer {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            background-color: #032c57;
+            color: #baccde;
+            text-align: center;
+            z-index: 100000;
+        }
+
+        #footer a {
+            color: #baccde;
+        }
+    
+    </style>
+</head>
+
+
+<body>
+    <h1 class="light-text">Sunshine - SBOM visualization tool</h1>
+    <br>
+    <div id="upload-file-container">
+        <span>Analyzed CycloneDX JSON file: <i>bom.json</i></span>
+    </div>
+    <br><br>
+    <h3  class="light-text">Components chart</h3>
+    <div id="chart-container">
+    This chart visualizes components and their dependencies, with each segment representing a single component. The chart provides a hierarchical view of the dependency structure, with relationships radiating outward from the core components.<br>
+    <ul>
+        <li><b>Innermost circle:</b> represents components that are independent and not dependencies for any other components.</li>
+        <li><b>Outer circles:</b> each segment represents a dependency of the corresponding segment in the circle immediately inside it. The farther a segment is from the center, the deeper the dependency level.</li>
+    </ul>
+    <i>Note: If there is only one circle, it means that no dependency relationships are defined in the input file.</i>
+    <br><br>
+    The colors of the segments indicate the vulnerability status of the components:
+    <ul>
+        <li><b>Dark red:</b> affected by at least one critical severity vulnerability.</li>
+        <li><b>Red:</b> affected by at least one high severity vulnerability.</li>
+        <li><b>Orange:</b> affected by at least one medium severity vulnerability.</li>  
+        <li><b>Yellow:</b> affected by at least one low severity vulnerability.</li>  
+        <li><b>Green:</b> affected by at least one informational severity vulnerability.</li>  
+        <li><b>Light blue:</b> not directly affected by vulnerabilities but has at least one vulnerable dependency.</li>  
+        <li><b>Grey:</b> neither the component nor its dependencies are affected by any vulnerabilities.</li>
+    </ul>
+    The chart is interactive:  
+    <ul>
+        <li><b>Hovering:</b> displays details about a component, including its name, version, and list of vulnerabilities.</li>
+        <li><b>Clicking:</b> refocuses the chart. The clicked segment becomes the center (second innermost circle), showing only that component and its dependencies. In this view, the innermost circle is always blue. Clicking the blue circle navigates back up one level in the dependency hierarchy.</li>
+    </ul>
+    <hr>
+    <div id="chart-container-inner"></div>
+    </div>
+    <br>
+    <h3  class="light-text">Components table</h3>
+    <div id="table-container">
+        This table visualizes components, their dependencies, vulnerabilities and licenses.<br>
+        The colors of the elements in columns "Component", "Depends on" and "Dependency of" indicate the vulnerability status of the components:
+        <ul>
+            <li><b>Dark red:</b> affected by at least one critical severity vulnerability.</li>
+            <li><b>Red:</b> affected by at least one high severity vulnerability.</li>
+            <li><b>Orange:</b> affected by at least one medium severity vulnerability.</li>  
+            <li><b>Yellow:</b> affected by at least one low severity vulnerability.</li>  
+            <li><b>Green:</b> affected by at least one informational severity vulnerability.</li>  
+            <li><b>Light blue:</b> not directly affected by vulnerabilities but has at least one vulnerable dependency.</li>  
+            <li><b>Grey:</b> neither the component nor its dependencies are affected by any vulnerabilities.</li>
+        </ul>
+        <br>
+        The colors of the elements in columns "Direct vulnerabilities" and "Transitive vulnerabilities" indicate the severity of the vulnerabilities:
+        <ul>
+            <li><b>Dark red:</b> critical.</li>
+            <li><b>Red:</b> high.</li>
+            <li><b>Orange:</b> medium.</li>  
+            <li><b>Yellow:</b>low.</li>  
+            <li><b>Green:</b>informational.</li> 
+        </ul>
+        <hr><br>
+            <div id="table-container-inner">
+                <table id="components-table" class="table table-striped table-bordered" style="width:100%"><thead>
+        <tr>
+            <th>Component</th>
+            <th>Depends on</th>
+            <th>Dependency of</th>
+            <th>Direct <br>vulnerabilities</th>
+            <th>Transitive <br>vulnerabilities</th>
+            <th>License</th>
+        </tr>
+        <tr>
+            <th><input type="text" placeholder="Search Component" class="form-control search-in-table"></th>
+            <th><input type="text" placeholder="Search Depends on" class="form-control search-in-table"></th>
+            <th><input type="text" placeholder="Search Dependency of" class="form-control search-in-table"></th>
+            <th><input type="text" placeholder="Search Direct vulnerabilities" class="form-control search-in-table"></th>
+            <th><input type="text" placeholder="Search Transitive vulnerabilities" class="form-control search-in-table"></th>
+            <th><input type="text" placeholder="Search License" class="form-control search-in-table"></th>
+        </tr>
+    </thead><tbody><tr><td><span class="badge bg-secondary">WinampToSpotifyWeb 0.0.0</span></td><td><span class="badge bg-secondary">Microsoft.Extensions.Configuration 9.0.0</span><span style="display: none;">, </span><br><span class="badge bg-secondary">Microsoft.Extensions.Configuration.UserSecrets 9.0.0</span><span style="display: none;">, </span><br><span class="badge bg-secondary">Serilog.AspNetCore 9.0.0</span><span style="display: none;">, </span><br><span class="badge bg-secondary">bootstrap 5.3.3</span><span style="display: none;">, </span><br><span class="badge bg-secondary">Serilog.Extensions.Hosting 9.0.0</span><span style="display: none;">, </span><br><span class="badge bg-secondary">Serilog.Sinks.File 6.0.0</span><span style="display: none;">, </span><br><span class="badge bg-secondary">Serilog.Extensions.Logging 9.0.0</span><span style="display: none;">, </span><br><span class="badge bg-secondary">Microsoft.VisualStudio.Azure.Containers.Tools.Targets 1.21.0</span></td><td>-</td><td>-</td><td>-</td><td>-</td></tr>
+<tr><td><span class="badge bg-secondary">bootstrap 5.3.3</span></td><td>-</td><td><span class="badge bg-secondary">WinampToSpotifyWeb 0.0.0</span></td><td>-</td><td>-</td><td><span class="badge border border-dark text-dark">MIT</span></td></tr>
+<tr><td><span class="badge bg-secondary">Microsoft.Extensions.Configuration 9.0.0</span></td><td><span class="badge bg-secondary">Microsoft.Extensions.Configuration.Abstractions 9.0.0</span><span style="display: none;">, </span><br><span class="badge bg-secondary">Microsoft.Extensions.Primitives 9.0.0</span></td><td><span class="badge bg-secondary">Microsoft.Extensions.Configuration.Json 9.0.0</span><span style="display: none;">, </span><br><span class="badge bg-secondary">Microsoft.Extensions.Configuration.FileExtensions 9.0.0</span><span style="display: none;">, </span><br><span class="badge bg-secondary">WinampToSpotifyWeb 0.0.0</span></td><td>-</td><td>-</td><td><span class="badge border border-dark text-dark">MIT</span></td></tr>
+<tr><td><span class="badge bg-secondary">Microsoft.Extensions.Configuration.Abstractions 9.0.0</span></td><td><span class="badge bg-secondary">Microsoft.Extensions.Primitives 9.0.0</span></td><td><span class="badge bg-secondary">Microsoft.Extensions.Configuration 9.0.0</span><span style="display: none;">, </span><br><span class="badge bg-secondary">Microsoft.Extensions.Configuration.UserSecrets 9.0.0</span><span style="display: none;">, </span><br><span class="badge bg-secondary">Microsoft.Extensions.Configuration.Binder 9.0.0</span><span style="display: none;">, </span><br><span class="badge bg-secondary">Microsoft.Extensions.Configuration.FileExtensions 9.0.0</span><span style="display: none;">, </span><br><span class="badge bg-secondary">Microsoft.Extensions.Configuration.Json 9.0.0</span><span style="display: none;">, </span><br><span class="badge bg-secondary">Microsoft.Extensions.Hosting.Abstractions 9.0.0</span></td><td>-</td><td>-</td><td><span class="badge border border-dark text-dark">MIT</span></td></tr>
+<tr><td><span class="badge bg-secondary">Microsoft.Extensions.Configuration.Binder 9.0.0</span></td><td><span class="badge bg-secondary">Microsoft.Extensions.Configuration.Abstractions 9.0.0</span></td><td><span class="badge bg-secondary">Serilog.Settings.Configuration 9.0.0</span></td><td>-</td><td>-</td><td><span class="badge border border-dark text-dark">MIT</span></td></tr>
+<tr><td><span class="badge bg-secondary">Microsoft.Extensions.Configuration.FileExtensions 9.0.0</span></td><td><span class="badge bg-secondary">Microsoft.Extensions.Configuration 9.0.0</span><span style="display: none;">, </span><br><span class="badge bg-secondary">Microsoft.Extensions.Primitives 9.0.0</span><span style="display: none;">, </span><br><span class="badge bg-secondary">Microsoft.Extensions.FileProviders.Physical 9.0.0</span><span style="display: none;">, </span><br><span class="badge bg-secondary">Microsoft.Extensions.FileProviders.Abstractions 9.0.0</span><span style="display: none;">, </span><br><span class="badge bg-secondary">Microsoft.Extensions.Configuration.Abstractions 9.0.0</span></td><td><span class="badge bg-secondary">Microsoft.Extensions.Configuration.Json 9.0.0</span></td><td>-</td><td>-</td><td><span class="badge border border-dark text-dark">MIT</span></td></tr>
+<tr><td><span class="badge bg-secondary">Microsoft.Extensions.Configuration.Json 9.0.0</span></td><td><span class="badge bg-secondary">Microsoft.Extensions.Configuration 9.0.0</span><span style="display: none;">, </span><br><span class="badge bg-secondary">Microsoft.Extensions.FileProviders.Abstractions 9.0.0</span><span style="display: none;">, </span><br><span class="badge bg-secondary">Microsoft.Extensions.Configuration.FileExtensions 9.0.0</span><span style="display: none;">, </span><br><span class="badge bg-secondary">Microsoft.Extensions.Configuration.Abstractions 9.0.0</span><span style="display: none;">, </span><br><span class="badge bg-secondary">System.Text.Json 9.0.0</span></td><td><span class="badge bg-secondary">Microsoft.Extensions.Configuration.UserSecrets 9.0.0</span></td><td>-</td><td>-</td><td><span class="badge border border-dark text-dark">MIT</span></td></tr>
+<tr><td><span class="badge bg-secondary">Microsoft.Extensions.Configuration.UserSecrets 9.0.0</span></td><td><span class="badge bg-secondary">Microsoft.Extensions.Configuration.Abstractions 9.0.0</span><span style="display: none;">, </span><br><span class="badge bg-secondary">Microsoft.Extensions.Configuration.Json 9.0.0</span><span style="display: none;">, </span><br><span class="badge bg-secondary">Microsoft.Extensions.FileProviders.Abstractions 9.0.0</span><span style="display: none;">, </span><br><span class="badge bg-secondary">Microsoft.Extensions.FileProviders.Physical 9.0.0</span></td><td><span class="badge bg-secondary">WinampToSpotifyWeb 0.0.0</span></td><td>-</td><td>-</td><td><span class="badge border border-dark text-dark">MIT</span></td></tr>
+<tr><td><span class="badge bg-secondary">Microsoft.Extensions.DependencyInjection 9.0.0</span></td><td><span class="badge bg-secondary">Microsoft.Extensions.DependencyInjection.Abstractions 9.0.0</span></td><td><span class="badge bg-secondary">Microsoft.Extensions.Logging 9.0.0</span></td><td>-</td><td>-</td><td><span class="badge border border-dark text-dark">MIT</span></td></tr>
+<tr><td><span class="badge bg-secondary">Microsoft.Extensions.DependencyInjection.Abstractions 9.0.0</span></td><td>-</td><td><span class="badge bg-secondary">Microsoft.Extensions.Options 9.0.0</span><span style="display: none;">, </span><br><span class="badge bg-secondary">Microsoft.Extensions.Logging.Abstractions 9.0.0</span><span style="display: none;">, </span><br><span class="badge bg-secondary">Microsoft.Extensions.DependencyInjection 9.0.0</span><span style="display: none;">, </span><br><span class="badge bg-secondary">Microsoft.Extensions.Diagnostics.Abstractions 9.0.0</span><span style="display: none;">, </span><br><span class="badge bg-secondary">Serilog.Extensions.Hosting 9.0.0</span><span style="display: none;">, </span><br><span class="badge bg-secondary">Microsoft.Extensions.Hosting.Abstractions 9.0.0</span></td><td>-</td><td>-</td><td><span class="badge border border-dark text-dark">MIT</span></td></tr>
+<tr><td><span class="badge bg-secondary">Microsoft.Extensions.DependencyModel 9.0.0</span></td><td><span class="badge bg-secondary">System.Text.Encodings.Web 9.0.0</span><span style="display: none;">, </span><br><span class="badge bg-secondary">System.Text.Json 9.0.0</span></td><td><span class="badge bg-secondary">Serilog.Settings.Configuration 9.0.0</span></td><td>-</td><td>-</td><td><span class="badge border border-dark text-dark">MIT</span></td></tr>
+<tr><td><span class="badge bg-secondary">Microsoft.Extensions.Diagnostics.Abstractions 9.0.0</span></td><td><span class="badge bg-secondary">Microsoft.Extensions.Options 9.0.0</span><span style="display: none;">, </span><br><span class="badge bg-secondary">Microsoft.Extensions.DependencyInjection.Abstractions 9.0.0</span><span style="display: none;">, </span><br><span class="badge bg-secondary">System.Diagnostics.DiagnosticSource 9.0.0</span></td><td><span class="badge bg-secondary">Microsoft.Extensions.Hosting.Abstractions 9.0.0</span></td><td>-</td><td>-</td><td><span class="badge border border-dark text-dark">MIT</span></td></tr>
+<tr><td><span class="badge bg-secondary">Microsoft.Extensions.FileProviders.Abstractions 9.0.0</span></td><td><span class="badge bg-secondary">Microsoft.Extensions.Primitives 9.0.0</span></td><td><span class="badge bg-secondary">Microsoft.Extensions.Configuration.UserSecrets 9.0.0</span><span style="display: none;">, </span><br><span class="badge bg-secondary">Microsoft.Extensions.FileProviders.Physical 9.0.0</span><span style="display: none;">, </span><br><span class="badge bg-secondary">Microsoft.Extensions.Configuration.FileExtensions 9.0.0</span><span style="display: none;">, </span><br><span class="badge bg-secondary">Microsoft.Extensions.Configuration.Json 9.0.0</span><span style="display: none;">, </span><br><span class="badge bg-secondary">Microsoft.Extensions.Hosting.Abstractions 9.0.0</span></td><td>-</td><td>-</td><td><span class="badge border border-dark text-dark">MIT</span></td></tr>
+<tr><td><span class="badge bg-secondary">Microsoft.Extensions.FileProviders.Physical 9.0.0</span></td><td><span class="badge bg-secondary">Microsoft.Extensions.FileSystemGlobbing 9.0.0</span><span style="display: none;">, </span><br><span class="badge bg-secondary">Microsoft.Extensions.Primitives 9.0.0</span><span style="display: none;">, </span><br><span class="badge bg-secondary">Microsoft.Extensions.FileProviders.Abstractions 9.0.0</span></td><td><span class="badge bg-secondary">Microsoft.Extensions.Configuration.UserSecrets 9.0.0</span><span style="display: none;">, </span><br><span class="badge bg-secondary">Microsoft.Extensions.Configuration.FileExtensions 9.0.0</span></td><td>-</td><td>-</td><td><span class="badge border border-dark text-dark">MIT</span></td></tr>
+<tr><td><span class="badge bg-secondary">Microsoft.Extensions.FileSystemGlobbing 9.0.0</span></td><td>-</td><td><span class="badge bg-secondary">Microsoft.Extensions.FileProviders.Physical 9.0.0</span></td><td>-</td><td>-</td><td><span class="badge border border-dark text-dark">MIT</span></td></tr>
+<tr><td><span class="badge bg-secondary">Microsoft.Extensions.Hosting.Abstractions 9.0.0</span></td><td><span class="badge bg-secondary">Microsoft.Extensions.Logging.Abstractions 9.0.0</span><span style="display: none;">, </span><br><span class="badge bg-secondary">Microsoft.Extensions.Diagnostics.Abstractions 9.0.0</span><span style="display: none;">, </span><br><span class="badge bg-secondary">Microsoft.Extensions.FileProviders.Abstractions 9.0.0</span><span style="display: none;">, </span><br><span class="badge bg-secondary">Microsoft.Extensions.Configuration.Abstractions 9.0.0</span><span style="display: none;">, </span><br><span class="badge bg-secondary">Microsoft.Extensions.DependencyInjection.Abstractions 9.0.0</span></td><td><span class="badge bg-secondary">Serilog.Extensions.Hosting 9.0.0</span></td><td>-</td><td>-</td><td><span class="badge border border-dark text-dark">MIT</span></td></tr>
+<tr><td><span class="badge bg-secondary">Microsoft.Extensions.Logging 9.0.0</span></td><td><span class="badge bg-secondary">Microsoft.Extensions.Logging.Abstractions 9.0.0</span><span style="display: none;">, </span><br><span class="badge bg-secondary">Microsoft.Extensions.Options 9.0.0</span><span style="display: none;">, </span><br><span class="badge bg-secondary">Microsoft.Extensions.DependencyInjection 9.0.0</span></td><td><span class="badge bg-secondary">Serilog.Extensions.Logging 9.0.0</span></td><td>-</td><td>-</td><td><span class="badge border border-dark text-dark">MIT</span></td></tr>
+<tr><td><span class="badge bg-secondary">Microsoft.Extensions.Logging.Abstractions 9.0.0</span></td><td><span class="badge bg-secondary">Microsoft.Extensions.DependencyInjection.Abstractions 9.0.0</span><span style="display: none;">, </span><br><span class="badge bg-secondary">System.Diagnostics.DiagnosticSource 9.0.0</span></td><td><span class="badge bg-secondary">Microsoft.Extensions.Logging 9.0.0</span><span style="display: none;">, </span><br><span class="badge bg-secondary">Serilog.Extensions.Hosting 9.0.0</span><span style="display: none;">, </span><br><span class="badge bg-secondary">Microsoft.Extensions.Hosting.Abstractions 9.0.0</span></td><td>-</td><td>-</td><td><span class="badge border border-dark text-dark">MIT</span></td></tr>
+<tr><td><span class="badge bg-secondary">Microsoft.Extensions.Options 9.0.0</span></td><td><span class="badge bg-secondary">Microsoft.Extensions.Primitives 9.0.0</span><span style="display: none;">, </span><br><span class="badge bg-secondary">Microsoft.Extensions.DependencyInjection.Abstractions 9.0.0</span></td><td><span class="badge bg-secondary">Microsoft.Extensions.Logging 9.0.0</span><span style="display: none;">, </span><br><span class="badge bg-secondary">Microsoft.Extensions.Diagnostics.Abstractions 9.0.0</span></td><td>-</td><td>-</td><td><span class="badge border border-dark text-dark">MIT</span></td></tr>
+<tr><td><span class="badge bg-secondary">Microsoft.Extensions.Primitives 9.0.0</span></td><td>-</td><td><span class="badge bg-secondary">Microsoft.Extensions.Configuration 9.0.0</span><span style="display: none;">, </span><br><span class="badge bg-secondary">Microsoft.Extensions.Options 9.0.0</span><span style="display: none;">, </span><br><span class="badge bg-secondary">Microsoft.Extensions.FileProviders.Physical 9.0.0</span><span style="display: none;">, </span><br><span class="badge bg-secondary">Microsoft.Extensions.FileProviders.Abstractions 9.0.0</span><span style="display: none;">, </span><br><span class="badge bg-secondary">Microsoft.Extensions.Configuration.FileExtensions 9.0.0</span><span style="display: none;">, </span><br><span class="badge bg-secondary">Microsoft.Extensions.Configuration.Abstractions 9.0.0</span></td><td>-</td><td>-</td><td><span class="badge border border-dark text-dark">MIT</span></td></tr>
+<tr><td><span class="badge bg-secondary">Microsoft.VisualStudio.Azure.Containers.Tools.Targets 1.21.0</span></td><td>-</td><td><span class="badge bg-secondary">WinampToSpotifyWeb 0.0.0</span></td><td>-</td><td>-</td><td><span class="badge border border-dark text-dark">Unknown - See URL</span></td></tr>
+<tr><td><span class="badge bg-secondary">Serilog 4.2.0</span></td><td>-</td><td><span class="badge bg-secondary">Serilog.AspNetCore 9.0.0</span><span style="display: none;">, </span><br><span class="badge bg-secondary">Serilog.Sinks.Debug 3.0.0</span><span style="display: none;">, </span><br><span class="badge bg-secondary">Serilog.Extensions.Hosting 9.0.0</span><span style="display: none;">, </span><br><span class="badge bg-secondary">Serilog.Settings.Configuration 9.0.0</span><span style="display: none;">, </span><br><span class="badge bg-secondary">Serilog.Sinks.File 6.0.0</span><span style="display: none;">, </span><br><span class="badge bg-secondary">Serilog.Extensions.Logging 9.0.0</span><span style="display: none;">, </span><br><span class="badge bg-secondary">Serilog.Sinks.Console 6.0.0</span><span style="display: none;">, </span><br><span class="badge bg-secondary">Serilog.Formatting.Compact 3.0.0</span></td><td>-</td><td>-</td><td><span class="badge border border-dark text-dark">Apache-2.0</span></td></tr>
+<tr><td><span class="badge bg-secondary">Serilog.AspNetCore 9.0.0</span></td><td><span class="badge bg-secondary">Serilog 4.2.0</span><span style="display: none;">, </span><br><span class="badge bg-secondary">Serilog.Sinks.Debug 3.0.0</span><span style="display: none;">, </span><br><span class="badge bg-secondary">Serilog.Extensions.Hosting 9.0.0</span><span style="display: none;">, </span><br><span class="badge bg-secondary">Serilog.Settings.Configuration 9.0.0</span><span style="display: none;">, </span><br><span class="badge bg-secondary">Serilog.Sinks.File 6.0.0</span><span style="display: none;">, </span><br><span class="badge bg-secondary">Serilog.Sinks.Console 6.0.0</span><span style="display: none;">, </span><br><span class="badge bg-secondary">Serilog.Formatting.Compact 3.0.0</span></td><td><span class="badge bg-secondary">WinampToSpotifyWeb 0.0.0</span></td><td>-</td><td>-</td><td><span class="badge border border-dark text-dark">Apache-2.0</span></td></tr>
+<tr><td><span class="badge bg-secondary">Serilog.Extensions.Hosting 9.0.0</span></td><td><span class="badge bg-secondary">Serilog 4.2.0</span><span style="display: none;">, </span><br><span class="badge bg-secondary">Microsoft.Extensions.Logging.Abstractions 9.0.0</span><span style="display: none;">, </span><br><span class="badge bg-secondary">Serilog.Extensions.Logging 9.0.0</span><span style="display: none;">, </span><br><span class="badge bg-secondary">Microsoft.Extensions.Hosting.Abstractions 9.0.0</span><span style="display: none;">, </span><br><span class="badge bg-secondary">Microsoft.Extensions.DependencyInjection.Abstractions 9.0.0</span></td><td><span class="badge bg-secondary">WinampToSpotifyWeb 0.0.0</span><span style="display: none;">, </span><br><span class="badge bg-secondary">Serilog.AspNetCore 9.0.0</span></td><td>-</td><td>-</td><td><span class="badge border border-dark text-dark">Apache-2.0</span></td></tr>
+<tr><td><span class="badge bg-secondary">Serilog.Extensions.Logging 9.0.0</span></td><td><span class="badge bg-secondary">Microsoft.Extensions.Logging 9.0.0</span><span style="display: none;">, </span><br><span class="badge bg-secondary">Serilog 4.2.0</span></td><td><span class="badge bg-secondary">Serilog.Extensions.Hosting 9.0.0</span><span style="display: none;">, </span><br><span class="badge bg-secondary">WinampToSpotifyWeb 0.0.0</span></td><td>-</td><td>-</td><td><span class="badge border border-dark text-dark">Apache-2.0</span></td></tr>
+<tr><td><span class="badge bg-secondary">Serilog.Formatting.Compact 3.0.0</span></td><td><span class="badge bg-secondary">Serilog 4.2.0</span></td><td><span class="badge bg-secondary">Serilog.AspNetCore 9.0.0</span></td><td>-</td><td>-</td><td><span class="badge border border-dark text-dark">Apache-2.0</span></td></tr>
+<tr><td><span class="badge bg-secondary">Serilog.Settings.Configuration 9.0.0</span></td><td><span class="badge bg-secondary">Microsoft.Extensions.DependencyModel 9.0.0</span><span style="display: none;">, </span><br><span class="badge bg-secondary">Microsoft.Extensions.Configuration.Binder 9.0.0</span><span style="display: none;">, </span><br><span class="badge bg-secondary">Serilog 4.2.0</span></td><td><span class="badge bg-secondary">Serilog.AspNetCore 9.0.0</span></td><td>-</td><td>-</td><td><span class="badge border border-dark text-dark">Apache-2.0</span></td></tr>
+<tr><td><span class="badge bg-secondary">Serilog.Sinks.Console 6.0.0</span></td><td><span class="badge bg-secondary">Serilog 4.2.0</span></td><td><span class="badge bg-secondary">Serilog.AspNetCore 9.0.0</span></td><td>-</td><td>-</td><td><span class="badge border border-dark text-dark">Apache-2.0</span></td></tr>
+<tr><td><span class="badge bg-secondary">Serilog.Sinks.Debug 3.0.0</span></td><td><span class="badge bg-secondary">Serilog 4.2.0</span></td><td><span class="badge bg-secondary">Serilog.AspNetCore 9.0.0</span></td><td>-</td><td>-</td><td><span class="badge border border-dark text-dark">Apache-2.0</span></td></tr>
+<tr><td><span class="badge bg-secondary">Serilog.Sinks.File 6.0.0</span></td><td><span class="badge bg-secondary">Serilog 4.2.0</span></td><td><span class="badge bg-secondary">WinampToSpotifyWeb 0.0.0</span><span style="display: none;">, </span><br><span class="badge bg-secondary">Serilog.AspNetCore 9.0.0</span></td><td>-</td><td>-</td><td><span class="badge border border-dark text-dark">Apache-2.0</span></td></tr>
+<tr><td><span class="badge bg-secondary">System.Diagnostics.DiagnosticSource 9.0.0</span></td><td>-</td><td><span class="badge bg-secondary">Microsoft.Extensions.Logging.Abstractions 9.0.0</span><span style="display: none;">, </span><br><span class="badge bg-secondary">Microsoft.Extensions.Diagnostics.Abstractions 9.0.0</span></td><td>-</td><td>-</td><td><span class="badge border border-dark text-dark">MIT</span></td></tr>
+<tr><td><span class="badge bg-secondary">System.IO.Pipelines 9.0.0</span></td><td>-</td><td><span class="badge bg-secondary">System.Text.Json 9.0.0</span></td><td>-</td><td>-</td><td><span class="badge border border-dark text-dark">MIT</span></td></tr>
+<tr><td><span class="badge bg-secondary">System.Text.Encodings.Web 9.0.0</span></td><td>-</td><td><span class="badge bg-secondary">Microsoft.Extensions.DependencyModel 9.0.0</span><span style="display: none;">, </span><br><span class="badge bg-secondary">System.Text.Json 9.0.0</span></td><td>-</td><td>-</td><td><span class="badge border border-dark text-dark">MIT</span></td></tr>
+<tr><td><span class="badge bg-secondary">System.Text.Json 9.0.0</span></td><td><span class="badge bg-secondary">System.IO.Pipelines 9.0.0</span><span style="display: none;">, </span><br><span class="badge bg-secondary">System.Text.Encodings.Web 9.0.0</span></td><td><span class="badge bg-secondary">Microsoft.Extensions.Configuration.Json 9.0.0</span><span style="display: none;">, </span><br><span class="badge bg-secondary">Microsoft.Extensions.DependencyModel 9.0.0</span></td><td>-</td><td>-</td><td><span class="badge border border-dark text-dark">MIT</span></td></tr>
+</tbody></table>
+            </div>
+    </div>
+    <script type="text/javascript">
+var dom = document.getElementById('chart-container-inner');
+var myChart = echarts.init(dom, null, {
+  renderer: 'canvas',
+  useDirtyRect: false
+});
+var app = {};
+
+var option;
+
+const data = [
+  {
+    "name": "WinampToSpotifyWeb <b>0.0.0</b>",
+    "children": [
+      {
+        "name": "Microsoft.Extensions.Configuration <b>9.0.0</b><br><br>License:<br><li>MIT</li>",
+        "children": [
+          {
+            "name": "Microsoft.Extensions.Configuration.Abstractions <b>9.0.0</b><br><br>License:<br><li>MIT</li>",
+            "children": [
+              {
+                "name": "Microsoft.Extensions.Primitives <b>9.0.0</b><br><br>License:<br><li>MIT</li>",
+                "children": [],
+                "value": 1,
+                "itemStyle": {
+                  "color": "#bcbcbc",
+                  "borderWidth": 2
+                }
+              }
+            ],
+            "value": 1,
+            "itemStyle": {
+              "color": "#bcbcbc",
+              "borderWidth": 2
+            }
+          },
+          {
+            "name": "Microsoft.Extensions.Primitives <b>9.0.0</b><br><br>License:<br><li>MIT</li>",
+            "children": [],
+            "value": 1,
+            "itemStyle": {
+              "color": "#bcbcbc",
+              "borderWidth": 2
+            }
+          }
+        ],
+        "value": 2,
+        "itemStyle": {
+          "color": "#bcbcbc",
+          "borderWidth": 2
+        }
+      },
+      {
+        "name": "Microsoft.Extensions.Configuration.UserSecrets <b>9.0.0</b><br><br>License:<br><li>MIT</li>",
+        "children": [
+          {
+            "name": "Microsoft.Extensions.Configuration.Abstractions <b>9.0.0</b><br><br>License:<br><li>MIT</li>",
+            "children": [
+              {
+                "name": "Microsoft.Extensions.Primitives <b>9.0.0</b><br><br>License:<br><li>MIT</li>",
+                "children": [],
+                "value": 1,
+                "itemStyle": {
+                  "color": "#bcbcbc",
+                  "borderWidth": 2
+                }
+              }
+            ],
+            "value": 1,
+            "itemStyle": {
+              "color": "#bcbcbc",
+              "borderWidth": 2
+            }
+          },
+          {
+            "name": "Microsoft.Extensions.Configuration.Json <b>9.0.0</b><br><br>License:<br><li>MIT</li>",
+            "children": [
+              {
+                "name": "Microsoft.Extensions.Configuration <b>9.0.0</b><br><br>License:<br><li>MIT</li>",
+                "children": [
+                  {
+                    "name": "Microsoft.Extensions.Configuration.Abstractions <b>9.0.0</b><br><br>License:<br><li>MIT</li>",
+                    "children": [
+                      {
+                        "name": "Microsoft.Extensions.Primitives <b>9.0.0</b><br><br>License:<br><li>MIT</li>",
+                        "children": [],
+                        "value": 1,
+                        "itemStyle": {
+                          "color": "#bcbcbc",
+                          "borderWidth": 2
+                        }
+                      }
+                    ],
+                    "value": 1,
+                    "itemStyle": {
+                      "color": "#bcbcbc",
+                      "borderWidth": 2
+                    }
+                  },
+                  {
+                    "name": "Microsoft.Extensions.Primitives <b>9.0.0</b><br><br>License:<br><li>MIT</li>",
+                    "children": [],
+                    "value": 1,
+                    "itemStyle": {
+                      "color": "#bcbcbc",
+                      "borderWidth": 2
+                    }
+                  }
+                ],
+                "value": 2,
+                "itemStyle": {
+                  "color": "#bcbcbc",
+                  "borderWidth": 2
+                }
+              },
+              {
+                "name": "Microsoft.Extensions.FileProviders.Abstractions <b>9.0.0</b><br><br>License:<br><li>MIT</li>",
+                "children": [
+                  {
+                    "name": "Microsoft.Extensions.Primitives <b>9.0.0</b><br><br>License:<br><li>MIT</li>",
+                    "children": [],
+                    "value": 1,
+                    "itemStyle": {
+                      "color": "#bcbcbc",
+                      "borderWidth": 2
+                    }
+                  }
+                ],
+                "value": 1,
+                "itemStyle": {
+                  "color": "#bcbcbc",
+                  "borderWidth": 2
+                }
+              },
+              {
+                "name": "Microsoft.Extensions.Configuration.FileExtensions <b>9.0.0</b><br><br>License:<br><li>MIT</li>",
+                "children": [
+                  {
+                    "name": "Microsoft.Extensions.Configuration <b>9.0.0</b><br><br>License:<br><li>MIT</li>",
+                    "children": [
+                      {
+                        "name": "Microsoft.Extensions.Configuration.Abstractions <b>9.0.0</b><br><br>License:<br><li>MIT</li>",
+                        "children": [
+                          {
+                            "name": "Microsoft.Extensions.Primitives <b>9.0.0</b><br><br>License:<br><li>MIT</li>",
+                            "children": [],
+                            "value": 1,
+                            "itemStyle": {
+                              "color": "#bcbcbc",
+                              "borderWidth": 2
+                            }
+                          }
+                        ],
+                        "value": 1,
+                        "itemStyle": {
+                          "color": "#bcbcbc",
+                          "borderWidth": 2
+                        }
+                      },
+                      {
+                        "name": "Microsoft.Extensions.Primitives <b>9.0.0</b><br><br>License:<br><li>MIT</li>",
+                        "children": [],
+                        "value": 1,
+                        "itemStyle": {
+                          "color": "#bcbcbc",
+                          "borderWidth": 2
+                        }
+                      }
+                    ],
+                    "value": 2,
+                    "itemStyle": {
+                      "color": "#bcbcbc",
+                      "borderWidth": 2
+                    }
+                  },
+                  {
+                    "name": "Microsoft.Extensions.Primitives <b>9.0.0</b><br><br>License:<br><li>MIT</li>",
+                    "children": [],
+                    "value": 1,
+                    "itemStyle": {
+                      "color": "#bcbcbc",
+                      "borderWidth": 2
+                    }
+                  },
+                  {
+                    "name": "Microsoft.Extensions.FileProviders.Physical <b>9.0.0</b><br><br>License:<br><li>MIT</li>",
+                    "children": [
+                      {
+                        "name": "Microsoft.Extensions.FileSystemGlobbing <b>9.0.0</b><br><br>License:<br><li>MIT</li>",
+                        "children": [],
+                        "value": 1,
+                        "itemStyle": {
+                          "color": "#bcbcbc",
+                          "borderWidth": 2
+                        }
+                      },
+                      {
+                        "name": "Microsoft.Extensions.Primitives <b>9.0.0</b><br><br>License:<br><li>MIT</li>",
+                        "children": [],
+                        "value": 1,
+                        "itemStyle": {
+                          "color": "#bcbcbc",
+                          "borderWidth": 2
+                        }
+                      },
+                      {
+                        "name": "Microsoft.Extensions.FileProviders.Abstractions <b>9.0.0</b><br><br>License:<br><li>MIT</li>",
+                        "children": [
+                          {
+                            "name": "Microsoft.Extensions.Primitives <b>9.0.0</b><br><br>License:<br><li>MIT</li>",
+                            "children": [],
+                            "value": 1,
+                            "itemStyle": {
+                              "color": "#bcbcbc",
+                              "borderWidth": 2
+                            }
+                          }
+                        ],
+                        "value": 1,
+                        "itemStyle": {
+                          "color": "#bcbcbc",
+                          "borderWidth": 2
+                        }
+                      }
+                    ],
+                    "value": 3,
+                    "itemStyle": {
+                      "color": "#bcbcbc",
+                      "borderWidth": 2
+                    }
+                  },
+                  {
+                    "name": "Microsoft.Extensions.FileProviders.Abstractions <b>9.0.0</b><br><br>License:<br><li>MIT</li>",
+                    "children": [
+                      {
+                        "name": "Microsoft.Extensions.Primitives <b>9.0.0</b><br><br>License:<br><li>MIT</li>",
+                        "children": [],
+                        "value": 1,
+                        "itemStyle": {
+                          "color": "#bcbcbc",
+                          "borderWidth": 2
+                        }
+                      }
+                    ],
+                    "value": 1,
+                    "itemStyle": {
+                      "color": "#bcbcbc",
+                      "borderWidth": 2
+                    }
+                  },
+                  {
+                    "name": "Microsoft.Extensions.Configuration.Abstractions <b>9.0.0</b><br><br>License:<br><li>MIT</li>",
+                    "children": [
+                      {
+                        "name": "Microsoft.Extensions.Primitives <b>9.0.0</b><br><br>License:<br><li>MIT</li>",
+                        "children": [],
+                        "value": 1,
+                        "itemStyle": {
+                          "color": "#bcbcbc",
+                          "borderWidth": 2
+                        }
+                      }
+                    ],
+                    "value": 1,
+                    "itemStyle": {
+                      "color": "#bcbcbc",
+                      "borderWidth": 2
+                    }
+                  }
+                ],
+                "value": 8,
+                "itemStyle": {
+                  "color": "#bcbcbc",
+                  "borderWidth": 2
+                }
+              },
+              {
+                "name": "Microsoft.Extensions.Configuration.Abstractions <b>9.0.0</b><br><br>License:<br><li>MIT</li>",
+                "children": [
+                  {
+                    "name": "Microsoft.Extensions.Primitives <b>9.0.0</b><br><br>License:<br><li>MIT</li>",
+                    "children": [],
+                    "value": 1,
+                    "itemStyle": {
+                      "color": "#bcbcbc",
+                      "borderWidth": 2
+                    }
+                  }
+                ],
+                "value": 1,
+                "itemStyle": {
+                  "color": "#bcbcbc",
+                  "borderWidth": 2
+                }
+              },
+              {
+                "name": "System.Text.Json <b>9.0.0</b><br><br>License:<br><li>MIT</li>",
+                "children": [
+                  {
+                    "name": "System.IO.Pipelines <b>9.0.0</b><br><br>License:<br><li>MIT</li>",
+                    "children": [],
+                    "value": 1,
+                    "itemStyle": {
+                      "color": "#bcbcbc",
+                      "borderWidth": 2
+                    }
+                  },
+                  {
+                    "name": "System.Text.Encodings.Web <b>9.0.0</b><br><br>License:<br><li>MIT</li>",
+                    "children": [],
+                    "value": 1,
+                    "itemStyle": {
+                      "color": "#bcbcbc",
+                      "borderWidth": 2
+                    }
+                  }
+                ],
+                "value": 2,
+                "itemStyle": {
+                  "color": "#bcbcbc",
+                  "borderWidth": 2
+                }
+              }
+            ],
+            "value": 14,
+            "itemStyle": {
+              "color": "#bcbcbc",
+              "borderWidth": 2
+            }
+          },
+          {
+            "name": "Microsoft.Extensions.FileProviders.Abstractions <b>9.0.0</b><br><br>License:<br><li>MIT</li>",
+            "children": [
+              {
+                "name": "Microsoft.Extensions.Primitives <b>9.0.0</b><br><br>License:<br><li>MIT</li>",
+                "children": [],
+                "value": 1,
+                "itemStyle": {
+                  "color": "#bcbcbc",
+                  "borderWidth": 2
+                }
+              }
+            ],
+            "value": 1,
+            "itemStyle": {
+              "color": "#bcbcbc",
+              "borderWidth": 2
+            }
+          },
+          {
+            "name": "Microsoft.Extensions.FileProviders.Physical <b>9.0.0</b><br><br>License:<br><li>MIT</li>",
+            "children": [
+              {
+                "name": "Microsoft.Extensions.FileSystemGlobbing <b>9.0.0</b><br><br>License:<br><li>MIT</li>",
+                "children": [],
+                "value": 1,
+                "itemStyle": {
+                  "color": "#bcbcbc",
+                  "borderWidth": 2
+                }
+              },
+              {
+                "name": "Microsoft.Extensions.Primitives <b>9.0.0</b><br><br>License:<br><li>MIT</li>",
+                "children": [],
+                "value": 1,
+                "itemStyle": {
+                  "color": "#bcbcbc",
+                  "borderWidth": 2
+                }
+              },
+              {
+                "name": "Microsoft.Extensions.FileProviders.Abstractions <b>9.0.0</b><br><br>License:<br><li>MIT</li>",
+                "children": [
+                  {
+                    "name": "Microsoft.Extensions.Primitives <b>9.0.0</b><br><br>License:<br><li>MIT</li>",
+                    "children": [],
+                    "value": 1,
+                    "itemStyle": {
+                      "color": "#bcbcbc",
+                      "borderWidth": 2
+                    }
+                  }
+                ],
+                "value": 1,
+                "itemStyle": {
+                  "color": "#bcbcbc",
+                  "borderWidth": 2
+                }
+              }
+            ],
+            "value": 3,
+            "itemStyle": {
+              "color": "#bcbcbc",
+              "borderWidth": 2
+            }
+          }
+        ],
+        "value": 19,
+        "itemStyle": {
+          "color": "#bcbcbc",
+          "borderWidth": 2
+        }
+      },
+      {
+        "name": "Serilog.AspNetCore <b>9.0.0</b><br><br>License:<br><li>Apache-2.0</li>",
+        "children": [
+          {
+            "name": "Serilog <b>4.2.0</b><br><br>License:<br><li>Apache-2.0</li>",
+            "children": [],
+            "value": 1,
+            "itemStyle": {
+              "color": "#bcbcbc",
+              "borderWidth": 2
+            }
+          },
+          {
+            "name": "Serilog.Sinks.Debug <b>3.0.0</b><br><br>License:<br><li>Apache-2.0</li>",
+            "children": [
+              {
+                "name": "Serilog <b>4.2.0</b><br><br>License:<br><li>Apache-2.0</li>",
+                "children": [],
+                "value": 1,
+                "itemStyle": {
+                  "color": "#bcbcbc",
+                  "borderWidth": 2
+                }
+              }
+            ],
+            "value": 1,
+            "itemStyle": {
+              "color": "#bcbcbc",
+              "borderWidth": 2
+            }
+          },
+          {
+            "name": "Serilog.Extensions.Hosting <b>9.0.0</b><br><br>License:<br><li>Apache-2.0</li>",
+            "children": [
+              {
+                "name": "Serilog <b>4.2.0</b><br><br>License:<br><li>Apache-2.0</li>",
+                "children": [],
+                "value": 1,
+                "itemStyle": {
+                  "color": "#bcbcbc",
+                  "borderWidth": 2
+                }
+              },
+              {
+                "name": "Microsoft.Extensions.Logging.Abstractions <b>9.0.0</b><br><br>License:<br><li>MIT</li>",
+                "children": [
+                  {
+                    "name": "Microsoft.Extensions.DependencyInjection.Abstractions <b>9.0.0</b><br><br>License:<br><li>MIT</li>",
+                    "children": [],
+                    "value": 1,
+                    "itemStyle": {
+                      "color": "#bcbcbc",
+                      "borderWidth": 2
+                    }
+                  },
+                  {
+                    "name": "System.Diagnostics.DiagnosticSource <b>9.0.0</b><br><br>License:<br><li>MIT</li>",
+                    "children": [],
+                    "value": 1,
+                    "itemStyle": {
+                      "color": "#bcbcbc",
+                      "borderWidth": 2
+                    }
+                  }
+                ],
+                "value": 2,
+                "itemStyle": {
+                  "color": "#bcbcbc",
+                  "borderWidth": 2
+                }
+              },
+              {
+                "name": "Serilog.Extensions.Logging <b>9.0.0</b><br><br>License:<br><li>Apache-2.0</li>",
+                "children": [
+                  {
+                    "name": "Microsoft.Extensions.Logging <b>9.0.0</b><br><br>License:<br><li>MIT</li>",
+                    "children": [
+                      {
+                        "name": "Microsoft.Extensions.Logging.Abstractions <b>9.0.0</b><br><br>License:<br><li>MIT</li>",
+                        "children": [
+                          {
+                            "name": "Microsoft.Extensions.DependencyInjection.Abstractions <b>9.0.0</b><br><br>License:<br><li>MIT</li>",
+                            "children": [],
+                            "value": 1,
+                            "itemStyle": {
+                              "color": "#bcbcbc",
+                              "borderWidth": 2
+                            }
+                          },
+                          {
+                            "name": "System.Diagnostics.DiagnosticSource <b>9.0.0</b><br><br>License:<br><li>MIT</li>",
+                            "children": [],
+                            "value": 1,
+                            "itemStyle": {
+                              "color": "#bcbcbc",
+                              "borderWidth": 2
+                            }
+                          }
+                        ],
+                        "value": 2,
+                        "itemStyle": {
+                          "color": "#bcbcbc",
+                          "borderWidth": 2
+                        }
+                      },
+                      {
+                        "name": "Microsoft.Extensions.Options <b>9.0.0</b><br><br>License:<br><li>MIT</li>",
+                        "children": [
+                          {
+                            "name": "Microsoft.Extensions.Primitives <b>9.0.0</b><br><br>License:<br><li>MIT</li>",
+                            "children": [],
+                            "value": 1,
+                            "itemStyle": {
+                              "color": "#bcbcbc",
+                              "borderWidth": 2
+                            }
+                          },
+                          {
+                            "name": "Microsoft.Extensions.DependencyInjection.Abstractions <b>9.0.0</b><br><br>License:<br><li>MIT</li>",
+                            "children": [],
+                            "value": 1,
+                            "itemStyle": {
+                              "color": "#bcbcbc",
+                              "borderWidth": 2
+                            }
+                          }
+                        ],
+                        "value": 2,
+                        "itemStyle": {
+                          "color": "#bcbcbc",
+                          "borderWidth": 2
+                        }
+                      },
+                      {
+                        "name": "Microsoft.Extensions.DependencyInjection <b>9.0.0</b><br><br>License:<br><li>MIT</li>",
+                        "children": [
+                          {
+                            "name": "Microsoft.Extensions.DependencyInjection.Abstractions <b>9.0.0</b><br><br>License:<br><li>MIT</li>",
+                            "children": [],
+                            "value": 1,
+                            "itemStyle": {
+                              "color": "#bcbcbc",
+                              "borderWidth": 2
+                            }
+                          }
+                        ],
+                        "value": 1,
+                        "itemStyle": {
+                          "color": "#bcbcbc",
+                          "borderWidth": 2
+                        }
+                      }
+                    ],
+                    "value": 5,
+                    "itemStyle": {
+                      "color": "#bcbcbc",
+                      "borderWidth": 2
+                    }
+                  },
+                  {
+                    "name": "Serilog <b>4.2.0</b><br><br>License:<br><li>Apache-2.0</li>",
+                    "children": [],
+                    "value": 1,
+                    "itemStyle": {
+                      "color": "#bcbcbc",
+                      "borderWidth": 2
+                    }
+                  }
+                ],
+                "value": 6,
+                "itemStyle": {
+                  "color": "#bcbcbc",
+                  "borderWidth": 2
+                }
+              },
+              {
+                "name": "Microsoft.Extensions.Hosting.Abstractions <b>9.0.0</b><br><br>License:<br><li>MIT</li>",
+                "children": [
+                  {
+                    "name": "Microsoft.Extensions.Logging.Abstractions <b>9.0.0</b><br><br>License:<br><li>MIT</li>",
+                    "children": [
+                      {
+                        "name": "Microsoft.Extensions.DependencyInjection.Abstractions <b>9.0.0</b><br><br>License:<br><li>MIT</li>",
+                        "children": [],
+                        "value": 1,
+                        "itemStyle": {
+                          "color": "#bcbcbc",
+                          "borderWidth": 2
+                        }
+                      },
+                      {
+                        "name": "System.Diagnostics.DiagnosticSource <b>9.0.0</b><br><br>License:<br><li>MIT</li>",
+                        "children": [],
+                        "value": 1,
+                        "itemStyle": {
+                          "color": "#bcbcbc",
+                          "borderWidth": 2
+                        }
+                      }
+                    ],
+                    "value": 2,
+                    "itemStyle": {
+                      "color": "#bcbcbc",
+                      "borderWidth": 2
+                    }
+                  },
+                  {
+                    "name": "Microsoft.Extensions.Diagnostics.Abstractions <b>9.0.0</b><br><br>License:<br><li>MIT</li>",
+                    "children": [
+                      {
+                        "name": "Microsoft.Extensions.Options <b>9.0.0</b><br><br>License:<br><li>MIT</li>",
+                        "children": [
+                          {
+                            "name": "Microsoft.Extensions.Primitives <b>9.0.0</b><br><br>License:<br><li>MIT</li>",
+                            "children": [],
+                            "value": 1,
+                            "itemStyle": {
+                              "color": "#bcbcbc",
+                              "borderWidth": 2
+                            }
+                          },
+                          {
+                            "name": "Microsoft.Extensions.DependencyInjection.Abstractions <b>9.0.0</b><br><br>License:<br><li>MIT</li>",
+                            "children": [],
+                            "value": 1,
+                            "itemStyle": {
+                              "color": "#bcbcbc",
+                              "borderWidth": 2
+                            }
+                          }
+                        ],
+                        "value": 2,
+                        "itemStyle": {
+                          "color": "#bcbcbc",
+                          "borderWidth": 2
+                        }
+                      },
+                      {
+                        "name": "Microsoft.Extensions.DependencyInjection.Abstractions <b>9.0.0</b><br><br>License:<br><li>MIT</li>",
+                        "children": [],
+                        "value": 1,
+                        "itemStyle": {
+                          "color": "#bcbcbc",
+                          "borderWidth": 2
+                        }
+                      },
+                      {
+                        "name": "System.Diagnostics.DiagnosticSource <b>9.0.0</b><br><br>License:<br><li>MIT</li>",
+                        "children": [],
+                        "value": 1,
+                        "itemStyle": {
+                          "color": "#bcbcbc",
+                          "borderWidth": 2
+                        }
+                      }
+                    ],
+                    "value": 4,
+                    "itemStyle": {
+                      "color": "#bcbcbc",
+                      "borderWidth": 2
+                    }
+                  },
+                  {
+                    "name": "Microsoft.Extensions.FileProviders.Abstractions <b>9.0.0</b><br><br>License:<br><li>MIT</li>",
+                    "children": [
+                      {
+                        "name": "Microsoft.Extensions.Primitives <b>9.0.0</b><br><br>License:<br><li>MIT</li>",
+                        "children": [],
+                        "value": 1,
+                        "itemStyle": {
+                          "color": "#bcbcbc",
+                          "borderWidth": 2
+                        }
+                      }
+                    ],
+                    "value": 1,
+                    "itemStyle": {
+                      "color": "#bcbcbc",
+                      "borderWidth": 2
+                    }
+                  },
+                  {
+                    "name": "Microsoft.Extensions.Configuration.Abstractions <b>9.0.0</b><br><br>License:<br><li>MIT</li>",
+                    "children": [
+                      {
+                        "name": "Microsoft.Extensions.Primitives <b>9.0.0</b><br><br>License:<br><li>MIT</li>",
+                        "children": [],
+                        "value": 1,
+                        "itemStyle": {
+                          "color": "#bcbcbc",
+                          "borderWidth": 2
+                        }
+                      }
+                    ],
+                    "value": 1,
+                    "itemStyle": {
+                      "color": "#bcbcbc",
+                      "borderWidth": 2
+                    }
+                  },
+                  {
+                    "name": "Microsoft.Extensions.DependencyInjection.Abstractions <b>9.0.0</b><br><br>License:<br><li>MIT</li>",
+                    "children": [],
+                    "value": 1,
+                    "itemStyle": {
+                      "color": "#bcbcbc",
+                      "borderWidth": 2
+                    }
+                  }
+                ],
+                "value": 9,
+                "itemStyle": {
+                  "color": "#bcbcbc",
+                  "borderWidth": 2
+                }
+              },
+              {
+                "name": "Microsoft.Extensions.DependencyInjection.Abstractions <b>9.0.0</b><br><br>License:<br><li>MIT</li>",
+                "children": [],
+                "value": 1,
+                "itemStyle": {
+                  "color": "#bcbcbc",
+                  "borderWidth": 2
+                }
+              }
+            ],
+            "value": 19,
+            "itemStyle": {
+              "color": "#bcbcbc",
+              "borderWidth": 2
+            }
+          },
+          {
+            "name": "Serilog.Settings.Configuration <b>9.0.0</b><br><br>License:<br><li>Apache-2.0</li>",
+            "children": [
+              {
+                "name": "Microsoft.Extensions.DependencyModel <b>9.0.0</b><br><br>License:<br><li>MIT</li>",
+                "children": [
+                  {
+                    "name": "System.Text.Encodings.Web <b>9.0.0</b><br><br>License:<br><li>MIT</li>",
+                    "children": [],
+                    "value": 1,
+                    "itemStyle": {
+                      "color": "#bcbcbc",
+                      "borderWidth": 2
+                    }
+                  },
+                  {
+                    "name": "System.Text.Json <b>9.0.0</b><br><br>License:<br><li>MIT</li>",
+                    "children": [
+                      {
+                        "name": "System.IO.Pipelines <b>9.0.0</b><br><br>License:<br><li>MIT</li>",
+                        "children": [],
+                        "value": 1,
+                        "itemStyle": {
+                          "color": "#bcbcbc",
+                          "borderWidth": 2
+                        }
+                      },
+                      {
+                        "name": "System.Text.Encodings.Web <b>9.0.0</b><br><br>License:<br><li>MIT</li>",
+                        "children": [],
+                        "value": 1,
+                        "itemStyle": {
+                          "color": "#bcbcbc",
+                          "borderWidth": 2
+                        }
+                      }
+                    ],
+                    "value": 2,
+                    "itemStyle": {
+                      "color": "#bcbcbc",
+                      "borderWidth": 2
+                    }
+                  }
+                ],
+                "value": 3,
+                "itemStyle": {
+                  "color": "#bcbcbc",
+                  "borderWidth": 2
+                }
+              },
+              {
+                "name": "Microsoft.Extensions.Configuration.Binder <b>9.0.0</b><br><br>License:<br><li>MIT</li>",
+                "children": [
+                  {
+                    "name": "Microsoft.Extensions.Configuration.Abstractions <b>9.0.0</b><br><br>License:<br><li>MIT</li>",
+                    "children": [
+                      {
+                        "name": "Microsoft.Extensions.Primitives <b>9.0.0</b><br><br>License:<br><li>MIT</li>",
+                        "children": [],
+                        "value": 1,
+                        "itemStyle": {
+                          "color": "#bcbcbc",
+                          "borderWidth": 2
+                        }
+                      }
+                    ],
+                    "value": 1,
+                    "itemStyle": {
+                      "color": "#bcbcbc",
+                      "borderWidth": 2
+                    }
+                  }
+                ],
+                "value": 1,
+                "itemStyle": {
+                  "color": "#bcbcbc",
+                  "borderWidth": 2
+                }
+              },
+              {
+                "name": "Serilog <b>4.2.0</b><br><br>License:<br><li>Apache-2.0</li>",
+                "children": [],
+                "value": 1,
+                "itemStyle": {
+                  "color": "#bcbcbc",
+                  "borderWidth": 2
+                }
+              }
+            ],
+            "value": 5,
+            "itemStyle": {
+              "color": "#bcbcbc",
+              "borderWidth": 2
+            }
+          },
+          {
+            "name": "Serilog.Sinks.File <b>6.0.0</b><br><br>License:<br><li>Apache-2.0</li>",
+            "children": [
+              {
+                "name": "Serilog <b>4.2.0</b><br><br>License:<br><li>Apache-2.0</li>",
+                "children": [],
+                "value": 1,
+                "itemStyle": {
+                  "color": "#bcbcbc",
+                  "borderWidth": 2
+                }
+              }
+            ],
+            "value": 1,
+            "itemStyle": {
+              "color": "#bcbcbc",
+              "borderWidth": 2
+            }
+          },
+          {
+            "name": "Serilog.Sinks.Console <b>6.0.0</b><br><br>License:<br><li>Apache-2.0</li>",
+            "children": [
+              {
+                "name": "Serilog <b>4.2.0</b><br><br>License:<br><li>Apache-2.0</li>",
+                "children": [],
+                "value": 1,
+                "itemStyle": {
+                  "color": "#bcbcbc",
+                  "borderWidth": 2
+                }
+              }
+            ],
+            "value": 1,
+            "itemStyle": {
+              "color": "#bcbcbc",
+              "borderWidth": 2
+            }
+          },
+          {
+            "name": "Serilog.Formatting.Compact <b>3.0.0</b><br><br>License:<br><li>Apache-2.0</li>",
+            "children": [
+              {
+                "name": "Serilog <b>4.2.0</b><br><br>License:<br><li>Apache-2.0</li>",
+                "children": [],
+                "value": 1,
+                "itemStyle": {
+                  "color": "#bcbcbc",
+                  "borderWidth": 2
+                }
+              }
+            ],
+            "value": 1,
+            "itemStyle": {
+              "color": "#bcbcbc",
+              "borderWidth": 2
+            }
+          }
+        ],
+        "value": 29,
+        "itemStyle": {
+          "color": "#bcbcbc",
+          "borderWidth": 2
+        }
+      },
+      {
+        "name": "bootstrap <b>5.3.3</b><br><br>License:<br><li>MIT</li>",
+        "children": [],
+        "value": 1,
+        "itemStyle": {
+          "color": "#bcbcbc",
+          "borderWidth": 2
+        }
+      },
+      {
+        "name": "Serilog.Extensions.Hosting <b>9.0.0</b><br><br>License:<br><li>Apache-2.0</li>",
+        "children": [
+          {
+            "name": "Serilog <b>4.2.0</b><br><br>License:<br><li>Apache-2.0</li>",
+            "children": [],
+            "value": 1,
+            "itemStyle": {
+              "color": "#bcbcbc",
+              "borderWidth": 2
+            }
+          },
+          {
+            "name": "Microsoft.Extensions.Logging.Abstractions <b>9.0.0</b><br><br>License:<br><li>MIT</li>",
+            "children": [
+              {
+                "name": "Microsoft.Extensions.DependencyInjection.Abstractions <b>9.0.0</b><br><br>License:<br><li>MIT</li>",
+                "children": [],
+                "value": 1,
+                "itemStyle": {
+                  "color": "#bcbcbc",
+                  "borderWidth": 2
+                }
+              },
+              {
+                "name": "System.Diagnostics.DiagnosticSource <b>9.0.0</b><br><br>License:<br><li>MIT</li>",
+                "children": [],
+                "value": 1,
+                "itemStyle": {
+                  "color": "#bcbcbc",
+                  "borderWidth": 2
+                }
+              }
+            ],
+            "value": 2,
+            "itemStyle": {
+              "color": "#bcbcbc",
+              "borderWidth": 2
+            }
+          },
+          {
+            "name": "Serilog.Extensions.Logging <b>9.0.0</b><br><br>License:<br><li>Apache-2.0</li>",
+            "children": [
+              {
+                "name": "Microsoft.Extensions.Logging <b>9.0.0</b><br><br>License:<br><li>MIT</li>",
+                "children": [
+                  {
+                    "name": "Microsoft.Extensions.Logging.Abstractions <b>9.0.0</b><br><br>License:<br><li>MIT</li>",
+                    "children": [
+                      {
+                        "name": "Microsoft.Extensions.DependencyInjection.Abstractions <b>9.0.0</b><br><br>License:<br><li>MIT</li>",
+                        "children": [],
+                        "value": 1,
+                        "itemStyle": {
+                          "color": "#bcbcbc",
+                          "borderWidth": 2
+                        }
+                      },
+                      {
+                        "name": "System.Diagnostics.DiagnosticSource <b>9.0.0</b><br><br>License:<br><li>MIT</li>",
+                        "children": [],
+                        "value": 1,
+                        "itemStyle": {
+                          "color": "#bcbcbc",
+                          "borderWidth": 2
+                        }
+                      }
+                    ],
+                    "value": 2,
+                    "itemStyle": {
+                      "color": "#bcbcbc",
+                      "borderWidth": 2
+                    }
+                  },
+                  {
+                    "name": "Microsoft.Extensions.Options <b>9.0.0</b><br><br>License:<br><li>MIT</li>",
+                    "children": [
+                      {
+                        "name": "Microsoft.Extensions.Primitives <b>9.0.0</b><br><br>License:<br><li>MIT</li>",
+                        "children": [],
+                        "value": 1,
+                        "itemStyle": {
+                          "color": "#bcbcbc",
+                          "borderWidth": 2
+                        }
+                      },
+                      {
+                        "name": "Microsoft.Extensions.DependencyInjection.Abstractions <b>9.0.0</b><br><br>License:<br><li>MIT</li>",
+                        "children": [],
+                        "value": 1,
+                        "itemStyle": {
+                          "color": "#bcbcbc",
+                          "borderWidth": 2
+                        }
+                      }
+                    ],
+                    "value": 2,
+                    "itemStyle": {
+                      "color": "#bcbcbc",
+                      "borderWidth": 2
+                    }
+                  },
+                  {
+                    "name": "Microsoft.Extensions.DependencyInjection <b>9.0.0</b><br><br>License:<br><li>MIT</li>",
+                    "children": [
+                      {
+                        "name": "Microsoft.Extensions.DependencyInjection.Abstractions <b>9.0.0</b><br><br>License:<br><li>MIT</li>",
+                        "children": [],
+                        "value": 1,
+                        "itemStyle": {
+                          "color": "#bcbcbc",
+                          "borderWidth": 2
+                        }
+                      }
+                    ],
+                    "value": 1,
+                    "itemStyle": {
+                      "color": "#bcbcbc",
+                      "borderWidth": 2
+                    }
+                  }
+                ],
+                "value": 5,
+                "itemStyle": {
+                  "color": "#bcbcbc",
+                  "borderWidth": 2
+                }
+              },
+              {
+                "name": "Serilog <b>4.2.0</b><br><br>License:<br><li>Apache-2.0</li>",
+                "children": [],
+                "value": 1,
+                "itemStyle": {
+                  "color": "#bcbcbc",
+                  "borderWidth": 2
+                }
+              }
+            ],
+            "value": 6,
+            "itemStyle": {
+              "color": "#bcbcbc",
+              "borderWidth": 2
+            }
+          },
+          {
+            "name": "Microsoft.Extensions.Hosting.Abstractions <b>9.0.0</b><br><br>License:<br><li>MIT</li>",
+            "children": [
+              {
+                "name": "Microsoft.Extensions.Logging.Abstractions <b>9.0.0</b><br><br>License:<br><li>MIT</li>",
+                "children": [
+                  {
+                    "name": "Microsoft.Extensions.DependencyInjection.Abstractions <b>9.0.0</b><br><br>License:<br><li>MIT</li>",
+                    "children": [],
+                    "value": 1,
+                    "itemStyle": {
+                      "color": "#bcbcbc",
+                      "borderWidth": 2
+                    }
+                  },
+                  {
+                    "name": "System.Diagnostics.DiagnosticSource <b>9.0.0</b><br><br>License:<br><li>MIT</li>",
+                    "children": [],
+                    "value": 1,
+                    "itemStyle": {
+                      "color": "#bcbcbc",
+                      "borderWidth": 2
+                    }
+                  }
+                ],
+                "value": 2,
+                "itemStyle": {
+                  "color": "#bcbcbc",
+                  "borderWidth": 2
+                }
+              },
+              {
+                "name": "Microsoft.Extensions.Diagnostics.Abstractions <b>9.0.0</b><br><br>License:<br><li>MIT</li>",
+                "children": [
+                  {
+                    "name": "Microsoft.Extensions.Options <b>9.0.0</b><br><br>License:<br><li>MIT</li>",
+                    "children": [
+                      {
+                        "name": "Microsoft.Extensions.Primitives <b>9.0.0</b><br><br>License:<br><li>MIT</li>",
+                        "children": [],
+                        "value": 1,
+                        "itemStyle": {
+                          "color": "#bcbcbc",
+                          "borderWidth": 2
+                        }
+                      },
+                      {
+                        "name": "Microsoft.Extensions.DependencyInjection.Abstractions <b>9.0.0</b><br><br>License:<br><li>MIT</li>",
+                        "children": [],
+                        "value": 1,
+                        "itemStyle": {
+                          "color": "#bcbcbc",
+                          "borderWidth": 2
+                        }
+                      }
+                    ],
+                    "value": 2,
+                    "itemStyle": {
+                      "color": "#bcbcbc",
+                      "borderWidth": 2
+                    }
+                  },
+                  {
+                    "name": "Microsoft.Extensions.DependencyInjection.Abstractions <b>9.0.0</b><br><br>License:<br><li>MIT</li>",
+                    "children": [],
+                    "value": 1,
+                    "itemStyle": {
+                      "color": "#bcbcbc",
+                      "borderWidth": 2
+                    }
+                  },
+                  {
+                    "name": "System.Diagnostics.DiagnosticSource <b>9.0.0</b><br><br>License:<br><li>MIT</li>",
+                    "children": [],
+                    "value": 1,
+                    "itemStyle": {
+                      "color": "#bcbcbc",
+                      "borderWidth": 2
+                    }
+                  }
+                ],
+                "value": 4,
+                "itemStyle": {
+                  "color": "#bcbcbc",
+                  "borderWidth": 2
+                }
+              },
+              {
+                "name": "Microsoft.Extensions.FileProviders.Abstractions <b>9.0.0</b><br><br>License:<br><li>MIT</li>",
+                "children": [
+                  {
+                    "name": "Microsoft.Extensions.Primitives <b>9.0.0</b><br><br>License:<br><li>MIT</li>",
+                    "children": [],
+                    "value": 1,
+                    "itemStyle": {
+                      "color": "#bcbcbc",
+                      "borderWidth": 2
+                    }
+                  }
+                ],
+                "value": 1,
+                "itemStyle": {
+                  "color": "#bcbcbc",
+                  "borderWidth": 2
+                }
+              },
+              {
+                "name": "Microsoft.Extensions.Configuration.Abstractions <b>9.0.0</b><br><br>License:<br><li>MIT</li>",
+                "children": [
+                  {
+                    "name": "Microsoft.Extensions.Primitives <b>9.0.0</b><br><br>License:<br><li>MIT</li>",
+                    "children": [],
+                    "value": 1,
+                    "itemStyle": {
+                      "color": "#bcbcbc",
+                      "borderWidth": 2
+                    }
+                  }
+                ],
+                "value": 1,
+                "itemStyle": {
+                  "color": "#bcbcbc",
+                  "borderWidth": 2
+                }
+              },
+              {
+                "name": "Microsoft.Extensions.DependencyInjection.Abstractions <b>9.0.0</b><br><br>License:<br><li>MIT</li>",
+                "children": [],
+                "value": 1,
+                "itemStyle": {
+                  "color": "#bcbcbc",
+                  "borderWidth": 2
+                }
+              }
+            ],
+            "value": 9,
+            "itemStyle": {
+              "color": "#bcbcbc",
+              "borderWidth": 2
+            }
+          },
+          {
+            "name": "Microsoft.Extensions.DependencyInjection.Abstractions <b>9.0.0</b><br><br>License:<br><li>MIT</li>",
+            "children": [],
+            "value": 1,
+            "itemStyle": {
+              "color": "#bcbcbc",
+              "borderWidth": 2
+            }
+          }
+        ],
+        "value": 19,
+        "itemStyle": {
+          "color": "#bcbcbc",
+          "borderWidth": 2
+        }
+      },
+      {
+        "name": "Serilog.Sinks.File <b>6.0.0</b><br><br>License:<br><li>Apache-2.0</li>",
+        "children": [
+          {
+            "name": "Serilog <b>4.2.0</b><br><br>License:<br><li>Apache-2.0</li>",
+            "children": [],
+            "value": 1,
+            "itemStyle": {
+              "color": "#bcbcbc",
+              "borderWidth": 2
+            }
+          }
+        ],
+        "value": 1,
+        "itemStyle": {
+          "color": "#bcbcbc",
+          "borderWidth": 2
+        }
+      },
+      {
+        "name": "Serilog.Extensions.Logging <b>9.0.0</b><br><br>License:<br><li>Apache-2.0</li>",
+        "children": [
+          {
+            "name": "Microsoft.Extensions.Logging <b>9.0.0</b><br><br>License:<br><li>MIT</li>",
+            "children": [
+              {
+                "name": "Microsoft.Extensions.Logging.Abstractions <b>9.0.0</b><br><br>License:<br><li>MIT</li>",
+                "children": [
+                  {
+                    "name": "Microsoft.Extensions.DependencyInjection.Abstractions <b>9.0.0</b><br><br>License:<br><li>MIT</li>",
+                    "children": [],
+                    "value": 1,
+                    "itemStyle": {
+                      "color": "#bcbcbc",
+                      "borderWidth": 2
+                    }
+                  },
+                  {
+                    "name": "System.Diagnostics.DiagnosticSource <b>9.0.0</b><br><br>License:<br><li>MIT</li>",
+                    "children": [],
+                    "value": 1,
+                    "itemStyle": {
+                      "color": "#bcbcbc",
+                      "borderWidth": 2
+                    }
+                  }
+                ],
+                "value": 2,
+                "itemStyle": {
+                  "color": "#bcbcbc",
+                  "borderWidth": 2
+                }
+              },
+              {
+                "name": "Microsoft.Extensions.Options <b>9.0.0</b><br><br>License:<br><li>MIT</li>",
+                "children": [
+                  {
+                    "name": "Microsoft.Extensions.Primitives <b>9.0.0</b><br><br>License:<br><li>MIT</li>",
+                    "children": [],
+                    "value": 1,
+                    "itemStyle": {
+                      "color": "#bcbcbc",
+                      "borderWidth": 2
+                    }
+                  },
+                  {
+                    "name": "Microsoft.Extensions.DependencyInjection.Abstractions <b>9.0.0</b><br><br>License:<br><li>MIT</li>",
+                    "children": [],
+                    "value": 1,
+                    "itemStyle": {
+                      "color": "#bcbcbc",
+                      "borderWidth": 2
+                    }
+                  }
+                ],
+                "value": 2,
+                "itemStyle": {
+                  "color": "#bcbcbc",
+                  "borderWidth": 2
+                }
+              },
+              {
+                "name": "Microsoft.Extensions.DependencyInjection <b>9.0.0</b><br><br>License:<br><li>MIT</li>",
+                "children": [
+                  {
+                    "name": "Microsoft.Extensions.DependencyInjection.Abstractions <b>9.0.0</b><br><br>License:<br><li>MIT</li>",
+                    "children": [],
+                    "value": 1,
+                    "itemStyle": {
+                      "color": "#bcbcbc",
+                      "borderWidth": 2
+                    }
+                  }
+                ],
+                "value": 1,
+                "itemStyle": {
+                  "color": "#bcbcbc",
+                  "borderWidth": 2
+                }
+              }
+            ],
+            "value": 5,
+            "itemStyle": {
+              "color": "#bcbcbc",
+              "borderWidth": 2
+            }
+          },
+          {
+            "name": "Serilog <b>4.2.0</b><br><br>License:<br><li>Apache-2.0</li>",
+            "children": [],
+            "value": 1,
+            "itemStyle": {
+              "color": "#bcbcbc",
+              "borderWidth": 2
+            }
+          }
+        ],
+        "value": 6,
+        "itemStyle": {
+          "color": "#bcbcbc",
+          "borderWidth": 2
+        }
+      },
+      {
+        "name": "Microsoft.VisualStudio.Azure.Containers.Tools.Targets <b>1.21.0</b><br><br>License:<br><li>Unknown - See URL</li>",
+        "children": [],
+        "value": 1,
+        "itemStyle": {
+          "color": "#bcbcbc",
+          "borderWidth": 2
+        }
+      }
+    ],
+    "value": 78,
+    "itemStyle": {
+      "color": "#bcbcbc",
+      "borderWidth": 2
+    }
+  }
+];
+
+option = {
+  tooltip: {
+        formatter: function(params) {
+            return `${params.name}`;
+        },
+    },
+  series: {
+    radius: ['15%', '100%'],
+    type: 'sunburst',
+    sort: undefined,
+    emphasis: {
+      focus: 'ancestor'
+    },
+    data: data,
+    label: {
+      rotate: 'radial',
+      show: false
+    },
+    levels: []
+  }
+};
+
+if (option && typeof option === 'object') {
+  myChart.setOption(option);
+}
+
+window.addEventListener('resize', myChart.resize);
+
+let table = $('#components-table').DataTable({
+    "order": [[ 1, "asc" ]],
+    pageLength: 10,
+    dom: 'Blfrtip',
+    lengthMenu: [
+        [10, 25, 50, -1],
+        [10, 25, 50, 'All']
+    ],
+    buttons: [
+      { extend: 'copy', className: 'btn btn-dark mb-3 btn-sm' },
+      { extend: 'csv', className: 'btn btn-secondary mb-3 btn-sm' },
+      { extend: 'excel', className: 'btn btn-success mb-3 btn-sm' },
+      { extend: 'pdf', className: 'btn btn-danger mb-3 btn-sm' },
+      { extend: 'print', className: 'btn btn-info mb-3 btn-sm' }
+    ],
+    orderCellsTop: true,
+    "autoWidth": true
+  });
+
+$('#components-table thead input').on('keyup change', function () {
+    let columnIndex = $(this).parent().index();
+    table.column(columnIndex).search(this.value).draw();
+});
+      </script>
+      <br><br>
+      <div id="footer">Sunshine - SBOM visualization tool by <a href="https://www.linkedin.com/in/lucacapacci/">Luca Capacci</a> | <a href="https://github.com/lucacapacci/Sunshine/">GitHub repository</a> | <a href="https://github.com/lucacapacci/Sunshine/blob/main/LICENSE">License</a> | <a href="https://github.com/lucacapacci/Sunshine/blob/main/THIRD_PARTY_LICENSES">Third party licenses</a></div>
+    </body>
+</html>
