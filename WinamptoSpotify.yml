@@ -43,7 +43,7 @@ steps:
       script: 'dotnet tool install --global CycloneDX -g'
 
 - script: |
-      dotnet CycloneDX $(System.DefaultWorkingDirectory)/WinamptoSpotifyWeb/WinampToSpotifyWeb.csproj --output $(Build.ArtifactStagingDirectory)
+      dotnet CycloneDX $(System.DefaultWorkingDirectory)/WinamptoSpotifyWeb/WinampToSpotifyWeb.csproj --json --output $(Build.ArtifactStagingDirectory)
   displayName: Generate SBOM with CycloneDX
 
 - task: PublishBuildArtifacts@1
