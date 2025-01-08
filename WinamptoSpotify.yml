@@ -19,9 +19,9 @@ steps:
   inputs:
     projects: $(System.DefaultWorkingDirectory)/WinamptoSpotifyWeb
     arguments: --configuration $(BuildConfiguration)
-    
+
 - script: |
-    dotnet build $(Build.SourcesDirectory)/Demo.csproj --output $(Build.ArtifactStagingDirectory)
+    dotnet build $(Build.SourcesDirectory)/WinamptoSpotifyWeb/WinamptoSpotifyWeb.csproj --output $(Build.ArtifactStagingDirectory)
   displayName: 'Build the project'
 
 - task: PublishBuildArtifacts@1
