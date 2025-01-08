@@ -35,7 +35,16 @@ steps:
     curl -Lo $(Agent.TempDirectory)/sbom-tool https://github.com/microsoft/sbom-tool/releases/latest/download/sbom-tool-linux-x64
     chmod +x $(Agent.TempDirectory)/sbom-tool
     $(Agent.TempDirectory)/sbom-tool generate -b $(Build.ArtifactStagingDirectory) -bc $(System.DefaultWorkingDirectory)/WinamptoSpotifyWeb/ -pn Test -pv 1.0.0 -ps MyCompany -nsb https://sbom.mycompany.com -V Verbose
-  displayName: Generate SBOM
+  displayName: Generate SBOM with sbom-tool
+
+- task: CmdLine@2
+  displayName: 'Install CycloneDX dotnet tool'
+  inputs:
+      script: 'dotnet tool install --global CycloneDX -g'
+
+- script: |
+      dotnet CycloneDX $(System.DefaultWorkingDirectory)/WinampToSpotifyWeb.sln --output $(Build.ArtifactStagingDirectory)
+  displayName: Generate SBOM with CycloneDX
 
 - task: PublishBuildArtifacts@1
   inputs:
