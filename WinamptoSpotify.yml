@@ -14,17 +14,20 @@ steps:
   inputs:
     command: restore
     projects: $(Parameters.RestoreBuildProjects)
+    workingDirectory: 'WinamptoSpotifyWeb'
 - task: DotNetCoreCLI@2
   displayName: Build
   inputs:
     projects: $(Parameters.RestoreBuildProjects)
     arguments: --configuration $(BuildConfiguration)
+    workingDirectory: 'WinamptoSpotifyWeb'
 - task: DotNetCoreCLI@2
   displayName: Test
   inputs:
     command: test
     projects: $(Parameters.TestProjects)
     arguments: --configuration $(BuildConfiguration)
+    workingDirectory: 'WinamptoSpotifyWeb.Tests'
 - task: DotNetCoreCLI@2
   displayName: Publish
   inputs:
@@ -33,6 +36,7 @@ steps:
     projects: $(Parameters.RestoreBuildProjects)
     arguments: --configuration $(BuildConfiguration) --output $(build.artifactstagingdirectory)
     zipAfterPublish: True
+    workingDirectory: 'WinamptoSpotifyWeb'
 - task: PublishBuildArtifacts@1
   displayName: Publish Artifact
   condition: succeededOrFailed()
