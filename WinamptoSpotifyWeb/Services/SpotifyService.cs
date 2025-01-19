@@ -59,7 +59,7 @@ namespace winamptospotifyweb.Services
             if (string.IsNullOrWhiteSpace(folderPath)) throw new ArgumentException($"{nameof(folderPath)} is empty");
             if (string.IsNullOrWhiteSpace(accessToken)) throw new ArgumentException($"{nameof(accessToken)} is empty");
 
-            string artistAndOrAlbum = folderPath.Split('\\')[folderPath.Split('\\').Length -1];
+            string artistAndOrAlbum = folderPath.Split(Path.DirectorySeparatorChar)[folderPath.Split(Path.DirectorySeparatorChar).Length -1];
             ProcessFolder processFolder = new ProcessFolder(accessToken, folderPath, artistAndOrAlbum);
             processFolder.PlaylistId = await CreatePlayList(processFolder);
             processFolder.TracksInfo = await GetTrackUriAndNames(processFolder);
@@ -106,7 +106,7 @@ namespace winamptospotifyweb.Services
         private async Task<Dictionary<string, string>> GetTrackUri(ProcessFolder folderOperation)
         {
             Dictionary<string, string> trackInfoDict = new Dictionary<string, string>();
-            string artistInfo = folderOperation.FilePath.Split('\\')[folderOperation.FilePath.Split('\\').Length - 1];
+            string artistInfo = folderOperation.FilePath.Split(Path.DirectorySeparatorChar)[folderOperation.FilePath.Split(Path.DirectorySeparatorChar).Length - 1];
             string artist = artistInfo.Split(' ').FirstOrDefault();
 
             List<string> fileNamesList = GetMp3FileNames(folderOperation.FilePath, folderOperation.ArtistAlbumName);
