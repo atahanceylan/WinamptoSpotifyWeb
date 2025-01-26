@@ -75,6 +75,18 @@ steps:
     arguments: --configuration $(BuildConfiguration) --output $(build.artifactstagingdirectory)
     zipAfterPublish: True
 
+- task: UseDotNet@2
+  displayName: 'Use .NET Core sdk 8.x'
+  inputs:
+    version: 8.x
+
+- task: dependency-check.dependencycheck.dependency-check-build-task.dependency-check-build-task@6
+  displayName: 'Dependency Check'
+  inputs:
+    projectName: WinamptoSpotifyWeb
+    scanPath: WinamptoSpotifyWeb
+    nvdApiKey: $(myNvdApiKey)
+
 - task: PublishBuildArtifacts@1
   displayName: Publish Artifact
   condition: succeededOrFailed()
