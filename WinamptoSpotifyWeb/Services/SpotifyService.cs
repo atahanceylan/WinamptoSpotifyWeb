@@ -59,7 +59,17 @@ namespace winamptospotifyweb.Services
             if (string.IsNullOrWhiteSpace(folderPath)) throw new ArgumentException($"{nameof(folderPath)} is empty");
             if (string.IsNullOrWhiteSpace(accessToken)) throw new ArgumentException($"{nameof(accessToken)} is empty");
 
-            string artistAndOrAlbum = folderPath.Split(Path.DirectorySeparatorChar)[folderPath.Split(Path.DirectorySeparatorChar).Length -1];
+            if (Directory.Exists(folderPath))
+            {
+                string[] files = Directory.GetFiles(folderPath, "*.mp3");
+                if(files.Length <= 0)
+                {
+                    logger.Error($"{folderPath} don't have any mp3 file");
+                    throw new ArgumentException($"{folderPath} don't have any mp3 file");
+                }
+            }            
+
+            string artistAndOrAlbum = folderPath.Split(Path.DirectorySeparatorChar)[folderPath.Split(Path.DirectorySeparatorChar).Length - 1];
             ProcessFolder processFolder = new ProcessFolder(accessToken, folderPath, artistAndOrAlbum);
             processFolder.PlaylistId = await CreatePlayList(processFolder);
             processFolder.TracksInfo = await GetTrackUriAndNames(processFolder);
@@ -96,7 +106,7 @@ namespace winamptospotifyweb.Services
                 client.DefaultRequestHeaders.Add("Authorization", "Bearer " + folderOperation.AccessToken);
                 var response = await client.PostAsync(SpotifyAPIDetails.PlaylistBaseUrl.Replace("{UserId}", SpotifyAPIDetails.UserID), bodyPayload);
                 var responseContent = await response.Content.ReadAsStringAsync();
-                var playlist = JsonSerializer.Deserialize< SpotifyJsonResponseWrapper.PlayList>(responseContent);
+                var playlist = JsonSerializer.Deserialize<SpotifyJsonResponseWrapper.PlayList>(responseContent);
                 playlistId = playlist.id;
             }
             logger.Information($"{folderOperation.ArtistAlbumName} created successfully");
@@ -124,7 +134,7 @@ namespace winamptospotifyweb.Services
                         if (response.IsSuccessStatusCode)
                         {
                             string responseString = await response.Content.ReadAsStringAsync();
-                            var results = JsonSerializer.Deserialize< SpotifyJsonResponseWrapper.RootObject>(responseString);
+                            var results = JsonSerializer.Deserialize<SpotifyJsonResponseWrapper.RootObject>(responseString);
                             var tracks = results.tracks;
                             if (tracks.items.Count > 0)
                             {
