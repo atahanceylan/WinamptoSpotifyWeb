@@ -53,12 +53,6 @@ steps:
       python sunshine.py -i $(Build.ArtifactStagingDirectory)/bom.json -o $(Build.ArtifactStagingDirectory)/sbom.html
   displayName: Generate SBOM html
 
-- task: PublishBuildArtifacts@1
-  inputs:
-    PathtoPublish: '$(Build.ArtifactStagingDirectory)'
-    ArtifactName: 'drop'
-    publishLocation: 'Container'
-
 - task: DotNetCoreCLI@2
   displayName: Test
   inputs:
