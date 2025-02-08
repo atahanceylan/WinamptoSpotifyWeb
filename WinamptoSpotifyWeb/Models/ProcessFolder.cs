@@ -1,6 +1,6 @@
 ﻿using System.Runtime.CompilerServices;
 
-namespace winamptospotifyweb.Models
+namespace WinampToSpotifyWeb.Models
 {
     public class ProcessFolder
     {

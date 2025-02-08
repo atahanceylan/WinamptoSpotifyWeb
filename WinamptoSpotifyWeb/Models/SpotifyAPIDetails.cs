@@ -1,4 +1,4 @@
-﻿namespace winamptospotifyweb.Models
+﻿namespace WinampToSpotifyWeb.Models
 {
     public class SpotifyApiDetails
     {

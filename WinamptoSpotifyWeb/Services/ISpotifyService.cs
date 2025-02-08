@@ -1,7 +1,7 @@
 ﻿using System.Threading.Tasks;
-using winamptospotifyweb.Models;
+using WinampToSpotifyWeb.Models;
 
-namespace winamptospotifyweb.Services
+namespace WinampToSpotifyWeb.Services
 {
     public interface ISpotifyService
     {

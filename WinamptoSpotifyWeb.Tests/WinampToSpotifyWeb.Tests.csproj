@@ -25,7 +25,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\WinamptoSpotifyWeb\WinamptoSpotifyWeb.csproj" />
+    <ProjectReference Include="..\WinampToSpotifyWeb\WinampToSpotifyWeb.csproj" />
   </ItemGroup>
 
 </Project>

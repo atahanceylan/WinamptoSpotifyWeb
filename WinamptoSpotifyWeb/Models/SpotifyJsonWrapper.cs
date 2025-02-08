@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 
-namespace winamptospotifyweb.Models
+namespace WinampToSpotifyWeb.Models
 {
     public static class SpotifyJsonResponseWrapper
     {

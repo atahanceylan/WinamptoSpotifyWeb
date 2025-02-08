@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace winamptospotifyweb.Models
+namespace WinampToSpotifyWeb.Models
 {
     public class TrackInfo
     {

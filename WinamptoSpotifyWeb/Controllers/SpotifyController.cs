@@ -1,14 +1,14 @@
 ﻿using System;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Http;
-using winamptospotifyweb.Models;
+using WinampToSpotifyWeb.Models;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Options;
-using winamptospotifyweb.Services;
+using WinampToSpotifyWeb.Services;
 using Microsoft.AspNetCore.Http.Extensions;
 
 
-namespace winamptospotifyweb.Controllers
+namespace WinampToSpotifyWeb.Controllers
 {
     [Route("")]
     public class SpotifyController : Controller
