@@ -9,11 +9,11 @@ using System.Net.Http.Headers;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
-using winamptospotifyweb.Models;
+using WinampToSpotifyWeb.Models;
 using Microsoft.AspNetCore.Http.Extensions;
 using System.Text.Json;
 
-namespace winamptospotifyweb.Services
+namespace WinampToSpotifyWeb.Services
 {
     public class SpotifyService : ISpotifyService
     {
@@ -61,13 +61,15 @@ namespace winamptospotifyweb.Services
 
             if (Directory.Exists(folderPath))
             {
-                string[] files = Directory.GetFiles(folderPath, "*.mp3");
-                if(files.Length <= 0)
+                string[] mp3Files = Directory.GetFiles(folderPath, "*.mp3");
+                string[] flacFilesInfo = Directory.GetFiles(folderPath, "*.flac");
+                string[] files = [.. mp3Files, .. flacFilesInfo];                
+                if (files.Length <= 0)
                 {
-                    logger.Error($"{folderPath} don't have any mp3 file");
-                    throw new ArgumentException($"{folderPath} don't have any mp3 file");
+                    logger.Error($"{folderPath} don't have any audio file");
+                    throw new ArgumentException($"{folderPath} don't have any audio file");
                 }
-            }            
+            }
 
             string artistAndOrAlbum = folderPath.Split(Path.DirectorySeparatorChar)[folderPath.Split(Path.DirectorySeparatorChar).Length - 1];
             ProcessFolder processFolder = new ProcessFolder(accessToken, folderPath, artistAndOrAlbum);
@@ -86,13 +88,13 @@ namespace winamptospotifyweb.Services
             };
         }
 
-        private async Task<TrackInfo> GetTrackUriAndNames(ProcessFolder processFolder)
+        public async Task<TrackInfo> GetTrackUriAndNames(ProcessFolder processFolder)
         {
             Dictionary<string, string> trackInfoDict = await GetTrackUri(processFolder);
             return new TrackInfo(string.Join(",", trackInfoDict.Keys), string.Join(",", trackInfoDict.Values));
         }
 
-        private async Task<string> CreatePlayList(ProcessFolder folderOperation)
+        public async Task<string> CreatePlayList(ProcessFolder folderOperation)
         {
             string playlistId = String.Empty;
             var stringPayload = new
@@ -113,13 +115,13 @@ namespace winamptospotifyweb.Services
             return playlistId;
         }
 
-        private async Task<Dictionary<string, string>> GetTrackUri(ProcessFolder folderOperation)
+        public async Task<Dictionary<string, string>> GetTrackUri(ProcessFolder folderOperation)
         {
             Dictionary<string, string> trackInfoDict = new Dictionary<string, string>();
             string artistInfo = folderOperation.FilePath.Split(Path.DirectorySeparatorChar)[folderOperation.FilePath.Split(Path.DirectorySeparatorChar).Length - 1];
             string artist = artistInfo.Split(' ').FirstOrDefault();
 
-            List<string> fileNamesList = GetMp3FileNames(folderOperation.FilePath, folderOperation.ArtistAlbumName);
+            List<string> fileNamesList = GetAudioFileNames(folderOperation.FilePath, folderOperation.ArtistAlbumName);
             if (fileNamesList.Count > 0)
             {
                 foreach (var qb in from item in fileNamesList
@@ -159,13 +161,15 @@ namespace winamptospotifyweb.Services
                     };
         }
 
-        private List<string> GetMp3FileNames(string path, string artistName)
+        public List<string> GetAudioFileNames(string path, string artistName)
         {
-            FileInfo[] filesInfoArray = new DirectoryInfo(path).GetFiles("*.mp3");
-            List<string> fileNames = new List<string>();
-            if (filesInfoArray.Length > 0)
+            FileInfo[] mp3FilesInfo = new DirectoryInfo(path).GetFiles("*.mp3");
+            FileInfo[] flacFilesInfo = new DirectoryInfo(path).GetFiles("*.flac");
+            FileInfo[] filesInfo = [.. mp3FilesInfo, .. flacFilesInfo];
+            List<string> fileNames = new();
+            if (filesInfo.Length > 0)
             {
-                foreach (var file in filesInfoArray)
+                foreach (var file in filesInfo)
                 {
                     var fileName = Path.GetFileNameWithoutExtension(file.Name);
                     fileName = NormalizeFileName(artistName, fileName);
@@ -191,7 +195,7 @@ namespace winamptospotifyweb.Services
             return fileName;
         }
 
-        private async Task AddTracksToPlaylistOnSpotify(ProcessFolder folderOperation)
+        public async Task AddTracksToPlaylistOnSpotify(ProcessFolder folderOperation)
         {
             var qb = new QueryBuilder
             {
