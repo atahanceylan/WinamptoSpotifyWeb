@@ -16,6 +16,18 @@ steps:
     version: '9.x'
 
 - task: DotNetCoreCLI@2
+  inputs:
+    projects: $(System.DefaultWorkingDirectory)/WinamptoSpotifyWeb
+    command: 'build' 
+
+- task: DotNetCoreCLI@2
+  displayName: Test
+  inputs:
+    command: test
+    projects: $(System.DefaultWorkingDirectory)/WinamptoSpotifyWeb.Tests
+    arguments: --configuration $(BuildConfiguration)  
+
+- task: DotNetCoreCLI@2
   displayName: Restore
   inputs:
     command: restore
@@ -58,18 +70,6 @@ steps:
     PathtoPublish: '$(Build.ArtifactStagingDirectory)'
     ArtifactName: 'drop'
     publishLocation: 'Container'
-
-- task: DotNetCoreCLI@2
-  inputs:
-    projects: $(System.DefaultWorkingDirectory)/WinamptoSpotifyWeb
-    command: 'build' 
-
-- task: DotNetCoreCLI@2
-  displayName: Test
-  inputs:
-    command: test
-    projects: $(System.DefaultWorkingDirectory)/WinamptoSpotifyWeb.Tests
-    arguments: --configuration $(BuildConfiguration)  
       
 - task: DotNetCoreCLI@2
   displayName: Publish
