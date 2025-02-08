@@ -60,6 +60,11 @@ steps:
     publishLocation: 'Container'
 
 - task: DotNetCoreCLI@2
+  inputs:
+    projects: $(System.DefaultWorkingDirectory)/WinamptoSpotifyWeb
+    command: 'build' 
+
+- task: DotNetCoreCLI@2
   displayName: Test
   inputs:
     command: test
