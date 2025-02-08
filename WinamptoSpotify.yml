@@ -53,9 +53,9 @@ steps:
       python sunshine.py -i $(Build.ArtifactStagingDirectory)/bom.json -o $(Build.ArtifactStagingDirectory)/sbom.html
   displayName: Generate SBOM html
 
-- task: VSBuild@1
+- task: DownloadBuildArtifacts@1
   inputs:
-    solution: '$(System.DefaultWorkingDirectory)/WinamptoSpotifyWeb\*.sln'
+    buildType: 'current'
 
 - task: DotNetCoreCLI@2
   displayName: Test
