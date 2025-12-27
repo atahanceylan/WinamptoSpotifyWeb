@@ -13,7 +13,7 @@ steps:
 - task: UseDotNet@2
   inputs:
     packageType: 'sdk'
-    version: '9.x'
+    version: '10.x'
 
 - task: DotNetCoreCLI@2
   inputs:
@@ -81,9 +81,9 @@ steps:
     zipAfterPublish: True
 
 - task: UseDotNet@2
-  displayName: 'Use .NET Core sdk 8.x'
+  displayName: 'Use .NET Core sdk 10.x'
   inputs:
-    version: 8.x
+    version: 10.x
 
 - task: dependency-check.dependencycheck.dependency-check-build-task.dependency-check-build-task@6
   displayName: 'Dependency Check'
