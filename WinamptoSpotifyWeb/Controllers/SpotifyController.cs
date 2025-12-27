@@ -1,11 +1,13 @@
-﻿using System;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
-using WinampToSpotifyWeb.Models;
-using System.Threading.Tasks;
-using Microsoft.Extensions.Options;
-using WinampToSpotifyWeb.Services;
 using Microsoft.AspNetCore.Http.Extensions;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Options;
+using System;
+using System.IO;
+using System.Threading.Tasks;
+using WinampToSpotifyWeb.Models;
+using WinampToSpotifyWeb.Services;
 
 
 namespace WinampToSpotifyWeb.Controllers
@@ -16,11 +18,13 @@ namespace WinampToSpotifyWeb.Controllers
 
         private readonly SpotifyApiDetails spotifyAPIDetails;
         private readonly ISpotifyService spotifyService;
+        private readonly IWebHostEnvironment _env;
 
-        public SpotifyController(ISpotifyService spotifyService, IOptions<SpotifyApiDetails> spotifyApiDetails)
+        public SpotifyController(ISpotifyService spotifyService, IOptions<SpotifyApiDetails> spotifyApiDetails, IWebHostEnvironment env)
         {
             this.spotifyService = spotifyService;
             spotifyAPIDetails = spotifyApiDetails.Value;
+            _env = env;
         }
 
         [HttpGet]
@@ -50,6 +54,8 @@ namespace WinampToSpotifyWeb.Controllers
         [Route("/selectfolder")]
         public IActionResult SelectFolder()
         {
+            var folderPath = Path.Combine(_env.ContentRootPath,"SampleMp3Archieve", "Ozbi -Rakılı Seri 1");
+            ViewBag.Mp3FolderPath = folderPath;
             return View();
         }
 

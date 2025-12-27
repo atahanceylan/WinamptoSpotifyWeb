@@ -1,4 +1,7 @@
-﻿<!DOCTYPE html>
+﻿@{
+    var mp3Folder = (string)ViewBag.Mp3FolderPath;
+}
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <title>Selecting mp3 folder to process and send to Spotify API</title>
@@ -8,7 +11,7 @@
         <div class="form-group">
             <div class="col-md-6">
                 <label for="foldernameId">Folder name:</label>
-                <input type="text" id="foldernameId" class="form-control" name="folderpath" value="D:\Müzik Arşivi\Yabancı\Metallica">
+                <input type="text" id="foldernameId" class="form-control" name="folderpath" value="@mp3Folder">
                 <button type="submit" class="btn btn-primary" formaction="/processfolder">Submit to folder process</button>
             </div>
         </div>
