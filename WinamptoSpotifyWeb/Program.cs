@@ -27,6 +27,7 @@ builder.Services.AddMvc();
 
 // Add services to the container.
 builder.Services.AddRazorPages();
+builder.AddServiceDefaults();
 
 var app = builder.Build();
 
@@ -52,6 +53,7 @@ app.UseRouting();
 
 app.UseAuthorization();
 
+app.MapDefaultEndpoints();
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Spotify}/{action=SelectFolder}");

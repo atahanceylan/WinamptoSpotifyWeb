@@ -1,10 +1,14 @@
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 17
-VisualStudioVersion = 17.6.33723.286
+# Visual Studio Version 18
+VisualStudioVersion = 18.0.11222.15 d18.0
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WinamptoSpotifyWeb", "WinamptoSpotifyWeb/WinampToSpotifyWeb.csproj", "{9D060567-C15D-4F54-AA57-107CBDA14F85}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WinampToSpotifyWeb", "WinamptoSpotifyWeb\WinampToSpotifyWeb.csproj", "{9D060567-C15D-4F54-AA57-107CBDA14F85}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WinamptoSpotifyWeb.Tests", "WinamptoSpotifyWeb.Tests/WinampToSpotifyWeb.Tests.csproj", "{FB64EB41-7441-4C2E-B0C3-13BC425DE923}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WinampToSpotifyWeb.Tests", "WinamptoSpotifyWeb.Tests\WinampToSpotifyWeb.Tests.csproj", "{FB64EB41-7441-4C2E-B0C3-13BC425DE923}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ServiceDefaults", "ServiceDefaults\ServiceDefaults.csproj", "{F9A2BB23-537A-468D-88B4-B78D85116B0D}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AppHost", "AppHost\AppHost.csproj", "{7CA775DE-A315-4509-BC13-4135525FBD23}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -20,6 +24,14 @@ Global
 		{FB64EB41-7441-4C2E-B0C3-13BC425DE923}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{FB64EB41-7441-4C2E-B0C3-13BC425DE923}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{FB64EB41-7441-4C2E-B0C3-13BC425DE923}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F9A2BB23-537A-468D-88B4-B78D85116B0D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F9A2BB23-537A-468D-88B4-B78D85116B0D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F9A2BB23-537A-468D-88B4-B78D85116B0D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F9A2BB23-537A-468D-88B4-B78D85116B0D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7CA775DE-A315-4509-BC13-4135525FBD23}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7CA775DE-A315-4509-BC13-4135525FBD23}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7CA775DE-A315-4509-BC13-4135525FBD23}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7CA775DE-A315-4509-BC13-4135525FBD23}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -28,4 +40,3 @@ Global
 		SolutionGuid = {A45ADE80-3B4F-4FF9-8839-49E9EA85A009}
 	EndGlobalSection
 EndGlobal
-s
