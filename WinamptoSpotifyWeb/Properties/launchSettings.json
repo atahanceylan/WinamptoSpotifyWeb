@@ -7,14 +7,14 @@
       "sslPort": 44387
     }
   },
-  "profiles": {    
+  "profiles": {
     "winamptospotifyweb": {
       "commandName": "Project",
       "launchBrowser": true,
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development"
       },
-      "applicationUrl": "https://localhost:5000;https://localhost:5001"
+      "applicationUrl": "https://127.0.0.1:5000;http://127.0.0.1:5001"
     }
   }
 }
