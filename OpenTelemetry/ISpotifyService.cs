@@ -1,7 +1,4 @@
-﻿using System.Threading.Tasks;
-using WinampToSpotifyWeb.Models;
-
-namespace WinampToSpotifyWeb.Services
+﻿namespace OpenTelemetryLib
 {
     public interface ISpotifyService
     {
@@ -18,5 +15,8 @@ namespace WinampToSpotifyWeb.Services
         /// <param name="folderProcessor"></param>
         /// <returns></returns>
         public Task<PlaylistSummary> ProcessFolder(string folderPath, string accessToken);
+
+        PlaylistSummary GetPlaylistSummary();
+
     }
 }

@@ -1,4 +1,4 @@
-﻿namespace WinampToSpotifyWeb.Models
+﻿namespace OpenTelemetryLib
 {
     public class PlaylistSummary
     {
@@ -7,5 +7,7 @@
 
         /// <summary>Track names comma seperated.</summary>
         public string TracksAdded { get; set; }
+
+        public int TotalTracksAdded { get; set; }
     }
 }

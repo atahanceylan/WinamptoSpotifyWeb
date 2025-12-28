@@ -12,6 +12,7 @@ using System.Threading.Tasks;
 using WinampToSpotifyWeb.Models;
 using Microsoft.AspNetCore.Http.Extensions;
 using System.Text.Json;
+using OpenTelemetryLib;
 
 namespace WinampToSpotifyWeb.Services
 {
@@ -19,6 +20,10 @@ namespace WinampToSpotifyWeb.Services
     {
         private readonly SpotifyApiDetails SpotifyAPIDetails;
         private readonly ILogger logger;
+        private PlaylistSummary _playlistSummary;
+
+        public PlaylistSummary GetPlaylistSummary() => _playlistSummary ?? new PlaylistSummary();
+
 
         public SpotifyService(ILogger logger, IOptions<SpotifyApiDetails> spotifyAPIDetails)
         {
@@ -63,7 +68,7 @@ namespace WinampToSpotifyWeb.Services
             {
                 string[] mp3Files = Directory.GetFiles(folderPath, "*.mp3");
                 string[] flacFilesInfo = Directory.GetFiles(folderPath, "*.flac");
-                string[] files = [.. mp3Files, .. flacFilesInfo];                
+                string[] files = [.. mp3Files, .. flacFilesInfo];
                 if (files.Length <= 0)
                 {
                     logger.Error($"{folderPath} don't have any audio file");
@@ -81,11 +86,15 @@ namespace WinampToSpotifyWeb.Services
             logger.Information($"{processFolder.FilePath} is processed.");
             logger.Information($"{artistAndOrAlbum} album created successfully.Tracks added: {addedTracks}");
 
-            return new PlaylistSummary
-            {
-                AlbumName = artistAndOrAlbum,
-                TracksAdded = addedTracks,
-            };
+            _playlistSummary =
+             new PlaylistSummary
+             {
+                 AlbumName = artistAndOrAlbum,
+                 TracksAdded = addedTracks,
+                 TotalTracksAdded = processFolder.TracksInfo.TrackName.Split(',', StringSplitOptions.RemoveEmptyEntries).Length
+             };
+            
+            return _playlistSummary;
         }
 
         public async Task<TrackInfo> GetTrackUriAndNames(ProcessFolder processFolder)

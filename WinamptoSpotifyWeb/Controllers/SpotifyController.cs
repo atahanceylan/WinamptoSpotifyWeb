@@ -3,11 +3,11 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Extensions;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
+using OpenTelemetryLib;
 using System;
 using System.IO;
 using System.Threading.Tasks;
 using WinampToSpotifyWeb.Models;
-using WinampToSpotifyWeb.Services;
 
 
 namespace WinampToSpotifyWeb.Controllers
@@ -54,7 +54,7 @@ namespace WinampToSpotifyWeb.Controllers
         [Route("/selectfolder")]
         public IActionResult SelectFolder()
         {
-            var folderPath = Path.Combine(_env.ContentRootPath,"SampleMp3Archieve", "Ozbi -Rakılı Seri 1");
+            var folderPath = Path.Combine(_env.ContentRootPath, "SampleMp3Archieve", "Ozbi -Rakılı Seri 1");
             ViewBag.Mp3FolderPath = folderPath;
             return View();
         }
@@ -63,7 +63,8 @@ namespace WinampToSpotifyWeb.Controllers
         [Route("/processfolder")]
         public async Task<IActionResult> ProcessFolder(string folderpath)
         {
-            ViewData["plSummary"] = await spotifyService.ProcessFolder(folderpath, Request.Cookies["access_token"]);
+            var playlistSummary = await spotifyService.ProcessFolder(folderpath, Request.Cookies["access_token"]);
+            ViewData["plSummary"] = spotifyService.GetPlaylistSummary();
             return View();
         }
 
