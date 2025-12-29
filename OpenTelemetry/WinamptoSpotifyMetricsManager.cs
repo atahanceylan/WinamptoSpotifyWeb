@@ -22,7 +22,7 @@ namespace OpenTelemetryLib
         }
 
         /// <summary>
-        ///     Registers all custom metrics contained within the DasMetrics instance.
+        ///     Registers all custom metrics contained within the WinampToSpotify instance.
         /// </summary>
         public void Start()
         {

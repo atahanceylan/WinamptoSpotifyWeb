@@ -40,9 +40,6 @@ public partial class Program
         var logger = loggerFactory.CreateLogger<Program>();
 
         builder.Services.AddOpenTelemetry(logger);
-        builder.Services.AddSingleton<IWinampToSpotifyWebMetrics, SpotifyServiceMetrics>(sp =>
-                    new SpotifyServiceMetrics(sp.GetRequiredService<ISpotifyService>()));
-
         builder.Services.AddMvc();
 
         // Add services to the container.
